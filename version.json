@@ -1,0 +1,10 @@
+﻿{
+    "version":  "2.0.0",
+    "apkUrl":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
+    "url":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/dist.zip",
+    "checksum":  "6b771e4695f18fbe801c91bf8a3a6d93c1260de94491e47a4f833f4e8028de13",
+    "nativeVersion":  "2.0.0",
+    "fallbackUrl":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/dist.zip",
+    "notes":  "Lokalex Kotlin Native 2.0.0: Native Realtime WebSocket (Zero-Polling) \u0026 24/7 Persistent Background Operation",
+    "updatedAt":  "2026-11-10T23:20:35.312Z"
+}
