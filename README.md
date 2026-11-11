@@ -1,12 +1,12 @@
-﻿# Lokalex Kotlin Native App Update Repository
+# Lokalex Kotlin Native App Update Repository
 Repository for OTA updates and base APK releases for Lokalex Kotlin Native.
 
-- **Version**: 2.0.1
-- **Native Version**: 2.0.1
+- **Version**: 2.0.2
+- **Native Version**: 2.0.2
 - **Release Highlights**:
-  - **Camera Direct Capture**: Resolved issue where tapping camera opened the file picker. `isCaptureEnabled` now directly triggers the native camera via FileProvider.
-  - **Ultra High-Quality Images**: Boosted photo, gallery, canvas editor, and POD resolution to 2560px/2048px with 0.85/0.92 quality (eliminating aggressive 720px / 0.45 compression).
-  - **Screen-Off Background Sync**: Roster and chat synchronization now runs persistently on a 20s interval in background service with screen off / app closed.
-  - **Roster Catering Lineup Fix**: Removed stale Firebase RTDB overwrites in catering confirmation and protected active Available rotation lineup so riders first in line are never falsely blocked with "You are on End Shift".
-  - **Native Realtime WebSocket**: Phoenix Channels integration for sub-100ms instant customer chat push alerts.
-  - **24/7 Keep-Alive Service**: Runs in dedicated `:sync` process with AlarmManager resurrection and battery optimization bypass.
+  - **Locked Catering Card Selection**: Fixed active thread state binding (`Am(e)` and `PB()`) when selecting locked chat cards in the Catering tab so riders can inspect and unlock any card without selection bouncing.
+  - **Customer Name Collision Fix**: Removed single first-name alias extraction in `Xf` and single-token matching in `Qf`, preventing customers with identical first names (e.g. Maria Dedios vs Maria Dela Cruz) from being incorrectly locked or attributed to the same rider.
+  - **Null Notification Elimination**: Added strict null/blank/inbound validation in `LokalexForegroundService.kt` to prevent notifications with "null" content or title from being triggered by empty metadata updates.
+  - **Native Camera Direct Capture**: Direct camera opening without file picker modal via FileProvider.
+  - **High-Resolution Pipeline**: 2560px HD image processing across chat, canvas editor, and proof of delivery.
+  - **24/7 Keep-Alive Service**: Persistent 20s background sync for roster and chats with screen off / app closed.

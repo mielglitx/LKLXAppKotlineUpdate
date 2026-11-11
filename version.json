@@ -1,10 +1,10 @@
 ﻿{
-    "version":  "2.0.1",
+    "version":  "2.0.2",
     "url":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/dist.zip",
     "fallbackUrl":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/dist.zip",
-    "checksum":  "a239f2cad24be373dde87ca9644da7a9ab0fbb1049d005d9ce21b0a3ba47ca6c",
-    "updatedAt":  "2026-11-11T02:25:50.335Z",
-    "notes":  "Lokalex 2.0.1: Native Camera Direct Capture, High-Quality Photo/POD pipeline (2560px), 20s Background Chat \u0026 Roster Sync, Roster Catering Lineup Fix",
-    "nativeVersion":  "2.0.1",
+    "checksum":  "e9ae1c3fa2a448b6058bc9636de534703f14a261933d98c8bac4cdcb58f976be",
+    "updatedAt":  "2026-11-11T02:44:26.535Z",
+    "notes":  "Lokalex 2.0.2: Locked Catering Card Selection Fix, Customer Name First-Name Collision Fix, Null Notification Prevention",
+    "nativeVersion":  "2.0.2",
     "apkUrl":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk"
 }
