@@ -1,10 +1,10 @@
-﻿{
+{
   "version": "2.1.0",
   "url": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/dist.zip",
   "fallbackUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/dist.zip",
-  "checksum": "ac5876319dfef25db7342245bf1718dc6f50edb69d086048319cd0902e1b18e9",
-  "updatedAt": "2026-11-11T03:00:00.000Z",
-  "notes": "Lokalex 2.1.0 Native APK Update: Locked Catering Card Selection Fix, Customer Name First-Name Collision Fix, Null Notification Prevention",
+  "checksum": "335aaeb7729d0c976cf39caba9b2eb1feb5fbe8808ad2b8c7db638cc03a7c6e1",
+  "updatedAt": "2026-11-11T03:10:00.000Z",
+  "notes": "Lokalex 2.1.0: ServiceWorker Virtual Origin Resolution, Locked Card Selection Fix, Customer Name Collision Fix, Null Notification Prevention",
   "nativeVersion": "2.1.0",
   "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
   "isApkUpdate": true,
