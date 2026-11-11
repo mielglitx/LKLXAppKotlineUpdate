@@ -1,9 +1,10 @@
 # Lokalex Kotlin Native App Update Repository
-Repository for OTA updates and base APK releases for Lokalex Kotlin Native.
+Repository for base APK releases and app updates for Lokalex Kotlin Native.
 
-- **Version**: 2.0.2
-- **Native Version**: 2.0.2
+- **Version**: 2.1.0
+- **Native Version**: 2.1.0 (versionCode 210)
 - **Release Highlights**:
+  - **Native APK Installer Update**: Direct package installer prompt ensuring all native Kotlin background services, foreground notifications, and camera intents are updated.
   - **Locked Catering Card Selection**: Fixed active thread state binding (`Am(e)` and `PB()`) when selecting locked chat cards in the Catering tab so riders can inspect and unlock any card without selection bouncing.
   - **Customer Name Collision Fix**: Removed single first-name alias extraction in `Xf` and single-token matching in `Qf`, preventing customers with identical first names (e.g. Maria Dedios vs Maria Dela Cruz) from being incorrectly locked or attributed to the same rider.
   - **Null Notification Elimination**: Added strict null/blank/inbound validation in `LokalexForegroundService.kt` to prevent notifications with "null" content or title from being triggered by empty metadata updates.
