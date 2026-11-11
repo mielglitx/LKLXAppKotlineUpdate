@@ -1,10 +1,13 @@
 # Lokalex Kotlin Native App Update Repository
-Repository for base APK installer releases and changelog for Lokalex Kotlin Native.
+Repository for Base APK installer releases and release changelog for Lokalex Kotlin Native.
 
-- **Version**: 2.1.3
-- **Native Version**: 2.1.3 (versionCode 213)
-- **Update Mode**: Pure Base APK Installer Only (isApkOnly: true, orceApk: true)
-- **Release Highlights**:
-  - **Zero-Polling FCM Push Pipeline (Supabase-Only)**: Added LokalexFirebaseMessagingService, FcmTokenManager, and ChatAlertNotifier for instant high-priority push notifications via Supabase cm_tokens + send-fcm-push Edge Function, and stripped legacy Firebase RTDB fallbacks in favor of updated_at delta catch-up sync.
-  - **Android 12–15 Crash & Background Fixes**: Hardened LokalexForegroundService (startForegroundNotification() + stopSelf() fallback and in-process ctiveInstance reuse), guarded MainActivity WebView lifecycle callbacks, added last_crash.txt breadcrumbs, and exposed NativePermissionsBridge.getNativePushDiagnostics().
-  - **Low-Spec Optimization (Snapdragon 450 · 2GB RAM · 64GB ROM · 4G · 4500mAh)**: Enabled R8 code/resource shrinking (~2.32 MB APK / ~856 KB classes.dex), pruned stale duplicate web bundles, lazy-loaded Tesseract OCR, disabled offscreenPreRaster, added RAM-only onTrimMemory clearing, removed permanent FLAG_KEEP_SCREEN_ON, bounded PARTIAL_WAKE_LOCK, and tuned 45s WebSocket heartbeats + 15m Doze-safe watchdog.
+- **Version**: 2.1.4
+- **Native Version**: 2.1.4 (versionCode 214)
+- **APK Size**: 2377226 bytes (~2.27 MB)
+- **SHA-256**: `ae0ab8ecb7c437943a9193e3f465f4dd5866af59744dd462e50902468f426839`
+- **Update Mode**: Pure Base APK Installer Only (`isApkOnly: true`, `forceApk: true`)
+- **Latest Release Highlights**:
+  - **Base APK Updater Android Detection Fix**: Synchronously sets `window.isNativeKotlin` and `window.CapacitorCustomPlatform` in `index.html` before module initialization, updates `fC()`, and ensures `MainActivity.onPageFinished` preserves native flags so Android users never see `"Ang Base APK download ay para lamang sa Android app."`.
+  - **10-Minute Background Crash Hardening (2 GB RAM)**: Handles `WebViewClient.onRenderProcessGone` safely, pauses background WebView timers/rendering in `onStop()` (keeping Picture-in-Picture active), removes offscreen `LAYER_TYPE_HARDWARE` FBO pinning, blocks background WebView IPC wakeups, and adds coroutine exception handlers plus Android 12+ exact-alarm guards.
+  - **Store Menu Caching & Instant Repeat Sends**: Upgrades IndexedDB (`lokalex_idb_v2` v3) with `storeMenuGalleries` and `menuImagesCache`, caches gallery Blobs locally (120-image cap with ObjectURL cleanup), and preserves page `id`, `metaAttachmentId`, and `storeKey` across Quick-Send and Gallery flows.
+  - **Live Chat & Update Cleanup**: Caps native/web chat list payloads, merges incoming messages incrementally, pauses hidden heartbeats/watchdogs, strips heavy `backdrop-blur*` layers, downscales upload photos off the UI thread, and removes legacy 0.x/1.x OTA clutter.

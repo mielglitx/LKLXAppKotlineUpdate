@@ -1,13 +1,13 @@
 {
-    "version":  "2.1.3",
-    "url":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
-    "fallbackUrl":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
-    "checksum":  "fec0fedf0c1bb85744a57ef9f17cf0a6c7f264f7f2d108e6b866e038d44cef73",
-    "updatedAt":  "2026-11-11T16:29:52.421Z",
-    "notes":  "Lokalex 2.1.3: Zero-polling FCM push wakeups (Supabase-only), Android 12-15 crash fixes, and Snapdragon 450 / 2GB RAM / 4500mAh optimization (~2.3 MB APK)",
-    "nativeVersion":  "2.1.3",
-    "apkUrl":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
-    "isApkUpdate":  true,
-    "isApkOnly":  true,
-    "forceApk":  true
+    "version": "2.1.4",
+    "url": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
+    "fallbackUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
+    "checksum": "ae0ab8ecb7c437943a9193e3f465f4dd5866af59744dd462e50902468f426839",
+    "updatedAt": "2026-11-11T22:50:26.096Z",
+    "notes": "Lokalex 2.1.4: Fixed Base APK Android detection bug, 10-minute 2GB RAM background renderer crash hardening, persistent IndexedDB store menu caching + Messenger attachment_id reuse, and Live Chat optimization (~2.27 MB APK)",
+    "nativeVersion": "2.1.4",
+    "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
+    "isApkUpdate": true,
+    "isApkOnly": true,
+    "forceApk": true
 }
