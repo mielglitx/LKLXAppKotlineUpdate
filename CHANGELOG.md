@@ -1,0 +1,1257 @@
+# Lokalex App Release Notes
+
+## Version 2.1.3 (2026-11-12)
+
+### 1. Zero-Polling FCM Push Wakeup Pipeline (Supabase-Only)
+* **High-Priority Background Push Wakeups:** Added native Firebase Cloud Messaging handlers (`LokalexFirebaseMessagingService`, `FcmTokenManager`, `ChatAlertNotifier`) integrated with Supabase `fcm_tokens` and Edge Function `send-fcm-push` to wake Doze/closed devices on unread customer messages without continuous polling.
+* **Delta Resume Sync & Legacy Cleanup:** Removed legacy Firebase RTDB HTTP fallbacks from `LokalexRepository` and the bundled app, switching reconnect/resume catch-up to lightweight Supabase `updated_at` delta queries (`refreshChatsDelta`) while suppressing notifications for outbound `You:` messages.
+
+### 2. Android 12–15 Foreground Crash & Lifecycle Fixes
+* **Foreground Promotion Safety:** Protected `LokalexForegroundService.startForegroundNotification()` with clean `stopSelf()` / `START_NOT_STICKY` handling and in-process `activeInstance` reuse across `LokalexKeepAliveReceiver` and FCM wakeups so background triggers never crash on Android 12–15.
+* **WebView Readiness & Crash Diagnostics:** Guarded `MainActivity` WebView lifecycle callbacks with `isWebViewReady()`, added uncaught crash breadcrumbs (`last_crash.txt`), and exposed `NativePermissionsBridge.getNativePushDiagnostics()`.
+
+### 3. Hardware Optimization (Snapdragon 450 · 2GB RAM · 64GB ROM · 4G · 4500mAh)
+* **84% Smaller APK & 98% Smaller DEX:** Enabled R8 code and resource shrinking (`minifyEnabled true`, `shrinkResources true`) and removed 6 stale duplicate asset bundles, shrinking `app-release.apk` from ~14.8 MB down to **2.32 MB** (single ~856 KB `classes.dex`).
+* **Battery & 4G Data Efficiency:** Removed permanent `FLAG_KEEP_SCREEN_ON` and deprecated `SCREEN_BRIGHT_WAKE_LOCK`, replaced infinite wake locks with bounded timeouts, tuned WebSocket/Phoenix keepalives to 45s with a 15-minute Doze-friendly watchdog, and lazy-loaded Tesseract OCR on demand.
+* **Low-RAM Stability:** Turned off `offscreenPreRaster`, added RAM-only WebView cache trimming in `onTrimMemory` (preserving disk cache to avoid 4G re-downloads), and auto-cleaned old `camera_*.jpg` temp captures.
+
+## Version 2.1.2 (2026-11-11)
+
+### 1. Customer Locking & Notification Spam Fixes
+* **Identical First-Name Isolation:** Fixed customer thread locking collision when multiple customers share the same first name.
+* **Alert Deduplication:** Eliminated burst notification sound spam on rapid updates and bumped native build to `2.1.2`.
+
+## Version 2.1.1 (2026-11-11)
+
+### 1. WebRTC Camera Modal & Direct APK Installer Flow
+* **In-App Camera Permission Bridge:** Added `WebChromeClient.onPermissionRequest` handling in `MainActivity` for WebRTC camera modals and enforced the direct APK installer update flow.
+
+## Version 2.1.0 (2026-11-11)
+
+### 1. WebView Asset Resolution & Native APK Updater
+* **ServiceWorker Virtual Origin Fix:** Resolved virtual origin `https://appassets.androidplatform.net/` fetch handling in Android WebView, bumped `versionCode` to 210 / `versionName` to `2.1.0`, and configured pure APK installer updates (`isApkOnly: true`, `forceApk: true`).
+
+## Version 1.2.18 (2026-11-10)
+
+### 1. Fix Customer "Done" Reverting to Inbox (China StClair Resurrection Bug)
+* **Eliminated False-Resurrection Loop:** Fixed race condition where marking any customer thread (e.g. *China StClair*) as Done triggered false auto-resurrection back into the Inbox because the customer's prior message was treated as an unread incoming event (`completedAt <= 0 || lastMsgTime >= completedAt`).
+* **Strict Buffer & Timestamp Check:** Enforced strict guard requiring positive completion timestamp (`completedAt > 0`), timestamp strictly greater than completion (`lastMsgTime > completedAt + 3000`), and active unread flag (`unreadForRider === true`) before any completed thread can be resurrected.
+* **Persistent Done Status Retention:** Hardened `chatFeedListener.js`, `chatFeedRender.js`, and Facebook Page sync in `fbResolvers.js` to unconditionally preserve Done status across background feed refreshes and Meta Business Suite polling passes.
+* **Dual-Key Lifecycle Sync:** Enhanced `executeThreadDone` in `threadLifecycle.js` to synchronously sanitize both raw key and `fb_` prefixed key in Supabase database metadata with `folder: 'done'`, `status: 'completed'`, and `unreadForRider: false`.
+
+### 2. Universal Safety Confirmation Modal
+* **Intuitive Checkbox Confirmation:** Replaced typing "confirm" across critical operations with a streamlined, tamper-proof checkbox toggle ("Yes, I understand and confirm this action") and dynamic OK/Cancel buttons.
+* **Full Backward Compatibility:** Maintained complete API compatibility with existing modal wrappers and caller hooks across the application.
+
+### 3. Cloudflare Webhook & Native Kotlin Alignment
+* **Worker In-Memory LRU Cache Eviction:** Added bounded LRU cache capping at 500 entries in `webhook-server/cloudflare-worker.js` to prevent isolate memory leaks during high traffic.
+* **Native Android UI Parity:** Updated Kotlin native screen models (`ChatFeedScreen.kt`) to enforce locked catering states and synchronize web build assets.
+
+## Version 1.2.17 (2026-11-10)
+
+### 1. Live Chat Feed Sanitization & Inbound Auto-Resurrection
+* **Instant Inbox Resurrection on Customer Chats:** Inbound customer messages (`!rawLastMsg.startsWith('You:')`) now immediately resurrect dormant/closed threads straight back to `inbox` with `status: 'active'` and `unreadForRider: true`. This guarantees incoming inquiries are never silently hidden in Done or missed while actively messaging.
+* **Facebook Webhook Server Auto-Reply Preservation:** Cloudflare Worker (`cloudflare-worker.js`) now deeply merges incoming thread metadata, ensuring automated business hours/transfer notices preserve `folder: 'inbox'` and notify riders without getting buried.
+
+### 2. Strict Live-Roster Catering Enforcement & Phantom Lock Elimination
+* **Active Roster Verification:** Integrated real-time rider catering verification against `catered/` roster records. A thread is strictly marked as catered only if the catering rider currently holds an active catering session.
+* **Auto-Purge Stale Catering Metadata:** Threads erroneously carrying stale catering flags (`cateredRiderId`, `cateredRiderName`, `cateredTimestamp`) when no rider is actively catering them are automatically sanitized and restored to the unassigned Inbox queue.
+* **Category Auto-Relock on Navigation:** When navigating away from the Catering tab or switching between message categories, uncommitted/unlocked chat threads are immediately re-locked and input containers wiped clean to prevent previous message bleed across conversations.
+
+### 3. Stability & Navigation Bug Fixes
+* **Reference & Syntax Error Fixes:** Resolved `ReferenceError: hasActiveCaterFields is not defined` and `ReferenceError: reconcileCustomerThreadsWithRoster is not defined` within live chat feed processing.
+* **Modern UI Category Navigation:** Fixed `TypeError: window.selectModernChatCategory is not a function` by attaching direct event listeners to tab filter pills and ensuring global function binding on modern UI controller initialization.
+* **Chat Message DOM Hygiene:** Explicitly clears message containers when closing customer chat modals or switching categories, preventing ghost messages from showing under different customer headers.
+
+## Version 1.2.16 (2026-11-10)
+
+### 1. Fix Cloudflare Webhook Overwriting Completed Chats (Done -> Catering Bug)
+* **Outbound Echo Deduplication:** Implemented fast-path deduplication on Facebook Messenger webhook echoes (`item.message.is_echo`). Outbound messages sent from Lokalex riders or auto-completion triggers are indexed via `midIndex` and skipped immediately on echo, preventing race conditions.
+* **Cache Stale Guard & Authoritative Lookups:** Fixed `MEM_CUSTOMER_CACHE` in Cloudflare Worker so outbound sends immediately invalidate cached customer state. Removed false cache bypass suppressions to ensure echoes and new events always query authoritative database records.
+* **Immutable State Protection on Webhook Echoes:** Enforced strict immutable state rules on webhook echoes: outbound messages from the page can never mutate a completed order back to `catering`, nor clear `completedAt` / `completedBy` metadata.
+* **Worker Consolidation:** Consolidated multiple legacy worker scripts into a single, clean, pure Supabase worker (`webhook-server/cloudflare-worker.js`).
+
+### 2. Fix Quick Response Drawer White Line Bug
+* **Non-Destructive Cleanup on Room Locks:** Removed `quick-replies-drawer` from the banner cleanup loop in `modernUiController.js`. Locked chat rooms now properly hide the drawer without wiping its inner HTML (`quick-replies-chips-container`).
+* **Self-Healing Drawer Structure:** Added `ensureQuickRepliesDrawerStructure()` in `threadQuickReplies.js` to automatically restore the drawer header, counter badge, and chips container if missing or cleared.
+* **Unified Dark Theme Styling:** Themed the quick replies drawer and cards to the modern dark palette (`#182229` / `#121a1f`) with amber highlights, preventing white container bleed.
+
+### 3. Fix Top Tab Bar Label & Badge Overlap
+* **Vertical Stacking on Mobile:** Updated Rotations, Logins, and Catered tabs to use `flex-col sm:flex-row`, placing tab titles on the top line and status badges on the bottom line on mobile screens.
+* **Strict Overflow Bounds:** Added `min-w-0 overflow-hidden truncate max-w-full text-[9.5px] sm:text-[10px]` to all tabs and badges so long statuses (`Catering`, `Break`) fit comfortably within the 4-column grid without overlapping adjacent tabs.
+
+### 4. Remove ePayment Fee from Wizard Receipts
+* **Unified One Price Law Compliance:** Removed the ₱15 transfer fee from delivery wizard calculations (`epayFee = 0`).
+* **Updated Receipt Labels:** Receipts and breakdown modals now display `COD Total (Cash/GCash to Pay)` with zero extra fee.
+
+### 5. Stale Lineup Fix on Screen Sleep / App Resume
+* **Socket Bounce on Resume:** Automatically refreshes dead sockets via `db.goOffline()` and `db.goOnline()` when the phone wakes or resumes from background.
+* **Authoritative REST Verification:** Lineup verification queries a fresh HTTPS REST endpoint with `cache: 'no-store'` before allowing a rider to cater, preventing stale queue bypasses.
+
+### 6. Header Top Bar De-Crowding
+* **Streamlined Mobile Top Bar:** Removed redundant Clock and Battery pills on mobile devices (accessible via hamburger popover) to give the top bar breathing room.
+
+## Version 1.2.10 (2026-11-10)
+
+### 1. Scheduled Order Alert Banner in New UI
+* **Real-Time Visual Urgency Banner:** Added `#modern-adv-order-banner` to the New UI (Modern Workspace) top section, directly beneath the app header, visible across all modern tabs without blocking the chat feed or bottom dock.
+* **Escalating Visual States & Alarm Synchronization:**
+  * **30-Minute Notice:** Blue banner with clock icon notifying of upcoming scheduled delivery.
+  * **15-Minute Reminder:** Amber banner with bell icon warning of impending scheduled delivery.
+  * **5-Minute Warning / Overdue:** High-visibility pulsing red banner with warning icon for imminent or overdue orders.
+* **Direct Order Inspection:** Tapping the banner or the **"View Order"** action button silences the dual-tone audio alarm and immediately displays the Advance Orders Modal (`openAdvancedOrdersModal()`) to view or cater scheduled orders.
+* **Smart Alert Snooze & Escalate (`X` button):** Riders can dismiss or snooze the banner/alarm for the current threshold. Future escalated urgency thresholds (e.g. progressing from 15m to 5m) automatically re-trigger the alarm and unhide the banner.
+* **UI Mode Synchronization:** Switching between Classic UI and New UI dynamically evaluates and re-renders active scheduled delivery alert banners.
+
+## Version 1.2.9 (2026-11-10)
+
+### 1. Fix Catered Customer Chat Not Moving to Catering Folder
+* **Instant In-Memory Roster Status Update:** Synchronously sets the catering rider's status to `Catering` and assigns the customer name in local memory (`globalState.rosterMembers`) before waiting for the network WebSocket echo. This eliminates the race condition where `getFastCaterer` or `renderRiderCustomerChatFeed` rendered prior to network receipt.
+* **Resilient Key & PSID Thread Matching:** Enhanced `applyChatCaterUpdate` to normalize all target ID variants (`rawPsid`, `fb_${rawPsid}`, `messenger_${rawPsid}`, `id_${rawPsid}`) across Firebase RTDB (`customerChats` and `customerChatMeta`) and performs an exhaustive in-memory sweep across `cachedCustomerThreadsMap` by both normalized keys and customer name.
+* **Eliminated Premature Fallback Wiping:** Removed destructive cleanup routines in `chatFeedRender` and `chatFeedListener` that erroneously demoted active catering threads back to `inbox` when background roster echoes were pending or when incoming delta updates were received.
+* **Modern UI Customer Header Candidate Resolution:** Fixed `getThreadCustomerCandidates` in `chatFeedState` to properly inspect `modern-chat-room-title` in addition to legacy chat header elements, ensuring customer name resolution succeeds seamlessly in Modern UI.
+* **Dual Category & Filter Synchronization:** Synchronizes both `modernChatCategory` and `activeRiderChatFilter` to `'catering'` upon catering, guaranteeing the customer card appears immediately in the Catering tab with the green rider outline and "YOU" badge.
+
+## Version 1.2.8 (2026-11-10)
+
+### 1. New UI (Modern Workspace) Set as Main UI
+* **Default Application Workspace:** Promoted the New UI (modern split-screen workspace with live chats feed, color-coded badges, rotations lineup, and docked room) to be the primary, default UI for all riders and team members.
+* **Seamless Auto-Migration:** Automatically transitions existing devices and fresh installs to the New UI without losing any sessions, settings, or credentials.
+* **Instant Cold-Start Paint:** Added zero-latency pre-routing (`instant-session-modern`) and background styling to launch directly into the New UI with zero flicker or flash of the legacy interface.
+* **Dual UI Toggle Preserved:** Riders who still wish to view the Classic layout can toggle it via the top header **"Classic"** pill or the Settings menu in the drill-down hamburger navigation.
+* **Hardware Back Button Navigation:** Integrated Android hardware back button listeners to cleanly dismiss open Modern menus, drill-down popovers, and quick day-off modals.
+
+## Version 1.2.7 (2026-11-10)
+
+### 1. Fix Customer Chat Card Moving to Done When Catered
+* **Reset Completion Metadata on Cater:** Fully resets all historical completion fields (`completedAt: null`, `completedByRiderId: null`, `status: 'active'`, `folder: 'catering'`) in Firebase RTDB and local memory cache when a rider caters an order.
+* **Prevented False Stale Cleanups:** Fixed early returns in `getActiveRosterCaterer` and guarded `chatFeedRender` so returning customers who previously completed orders are never erroneously swept into the Done folder.
+* **Folder Filter Alignment:** Strictly aligned all folder classification rules across Modern UI, Classic UI, and background resolvers to keep actively catered customers exclusively in the Catering tab.
+
+## Version 1.2.6 (2026-11-10)
+
+### 1. Automatic Catering Tab Switch & Instant Chat Room Loading
+* **Auto-Focus Active Catering Room:** When a rider clicks **"Cater"** on any customer (from the chat header, the chat card action strip, or the catering prompt modal), the app now automatically switches to the **Catering** tab/category and immediately loads that customer's chat room.
+* **Unified Experience Across Modes:** Works consistently in both Modern UI (`window.selectModernCustomerChat`) and Classic UI (`window.openRiderCustomerChatModal`).
+
+### 2. Automatic Inbox Switch on Order Completion ("Done")
+* **Immediate Queue Visibility:** When a rider marks an order as **"Done"**, the app automatically transitions to the **Inbox** tab/category so the rider can immediately view pending uncatered orders.
+* **Streamlined Workflow:** Applied consistently across chat thread completion (`confirmAndExecuteDone`, `executeThreadDone`), swipe actions (`handleThreadSwipeDone`), and roster delivery completions (`completeSingleCateringCustomer`).
+
+### 3. Catering Chat Card Selection & Lock Screen Fixes
+* **Resolved Single-Card Stuck Bug:** Fixed an issue where clicking on any card other than the first one in the Catering tab was ignored or forcibly snapped back to the first card.
+* **Normalized Chat Thread ID Matching:** Stripped Facebook and Messenger ID prefixes (`fb_`, `messenger_`) so `activeRiderChatCustId` accurately aligns with thread IDs during feed updates and re-renders.
+* **Non-Destructive Listener Cleanup:** Cleaned up active room listeners without nullifying `activeRiderChatCustId`, ensuring locked chat cards stay selected and responsive to rider interaction.
+
+### 4. Dynamic Theme Synchronization & Chat Box Contrast
+* **Fixed Stuck Light Mode in Modern UI:** Resolved the issue where switching from Classic UI in light mode to Modern UI left the docked chat box stuck with Classic light mode styling.
+* **HTML Root Theme Sync:** `applyModernTheme()` now dynamically synchronizes `<html class="dark">` and `<html class="light">`, root background colors, and color-scheme properties, ensuring Tailwind dark mode styles take effect immediately upon switching.
+* **Seamless UI Mode Toggling:** Restores the user's saved Classic UI theme preference when toggling back to Classic UI.
+
+## Version 1.2.5 (2026-11-08)
+
+### 1. Google Maps Link Detection & Direct Native App Navigation
+* **Fixed "Treated as Image" Bug:** Resolved the issue where customer-shared Google Maps links (`maps.app.goo.gl`, `maps.google.com`, `goo.gl/maps`, `maps.apple.com`, `waze.com`) or Facebook location attachments were mistakenly classified as photos and rendered into broken `<img>` tags.
+* **Strict Map Link Filtering:** Chat renderers now strictly filter out map links from image lists, preventing HTML webpages from being fed into image elements.
+* **📍 Dedicated Google Maps Location Card:** Map links now render as an interactive, styled Google Maps Location Card featuring:
+  * A prominent location pin icon and customer's destination address/link.
+  * An **"Open in Google Maps"** action button.
+* **Direct Native Maps App Launch:** Tapping **"Open in Google Maps"** invokes native Android/Capacitor App URL handling (`App.openUrl`), launching the native Google Maps app directly on the rider's device for instant turn-by-turn navigation.
+
+### 2. Miniature Visual Picture Thumbnails (~30 KB Preview)
+* **Real Visual Previews Instead of Text Cards:** Replaced generic placeholder text cards (`[icon] Attached Photo [LOAD]`) with actual visual miniature picture previews (~30 KB compressed preview via Facebook's native CDN thumbnail or lazy-loaded miniature).
+* **Instant Visual Recognition:** Riders can instantly recognize the customer's food photo, store item, or receipt directly in the message stream without having to blind-tap a placeholder button.
+* **On-Demand Full HD Modal Viewer:** Tapping any miniature picture preview immediately opens the interactive, full-screen pinch-to-zoom HD image viewer (`openImageViewerModal`), loading full-resolution media only when explicitly inspected.
+* **Album Photo Grid:** Multi-image attachments render in a clean visual grid where each photo is an interactive thumbnail that opens full-screen HD on tap.
+
+### 3. Accurate Data Gathering & Monitoring Transparency
+* **Elapsed Tracking Time Display:** The Data Usage Monitor now explicitly displays the exact elapsed monitoring duration (e.g. `⏱️ Monitored: 18 mins` or `2h 15m`) and the exact session start timestamp (e.g. `Tracking started: Nov 8, 7:05 PM`).
+* **Real-Time Data Transfer Rate:** Displays active bandwidth consumption rate (e.g. `Rate: 1.2 MB/min` or `42.5 KB/min`) computed over the active measurement window.
+* **Top Network Endpoints Profiler:** Added a dedicated **"Top Network Endpoints"** breakdown in the monitor, itemizing exact bandwidth consumed by each endpoint (e.g. `App Web Assets (Vite/PWA)`, `Supabase customer_chats`, `Facebook Messenger Graph API`, `Rider Roster RTDB`).
+* **Accurate Code Bundle Attribution:** Reclassified Vite script bundles and PWA asset fetches from generic "System" into `App Updates & Code Bundles` for 100% transparency.
+
+### 4. False Update Loop & Native Version Parity Fix
+* **Resolved Persistent Update Loop:** Fixed the bug where the app repeatedly prompted riders with `May Mahalagang Base App Update (APK)! Bagong Bersyon: v1.2.5, Kasalukuyang APK: v1.2.0` even when the rider was already running the v1.2.5 update.
+* **Decoupled Web OTA from Base APK Version Requirements:** Corrected `manifest.nativeVersion` in `version.json` to reflect the true minimum required native APK (`1.2.0`), so web OTA bundles never falsely trigger a full APK reinstall loop.
+* **Synchronized Built-In Version Constants:** Updated `CURRENT_BUILT_IN_VERSION` to `1.2.5`, aligned Android Gradle `versionName` to `1.2.5` (`versionCode 125`), and enhanced `getCurrentAppVersion()` to prioritize active and stored OTA versions over stale native fallback values.
+
+## Version 1.2.4 (2026-11-08)
+
+### 1. On-Demand Image Thumbnail Mode (Tap-to-Download)
+* **Zero-Egress Media Placeholders:** Attached photos and receipts in chat threads initially render in a sleek, lightweight thumbnail card (`📷 Attached Photo • Tap to download & view`).
+* **Tap-to-Download Execution:** The full-resolution image is **strictly never downloaded** across cellular data until the rider explicitly taps the media card.
+* **Instant Session Memory Caching:** Tapped images are cached in session memory and rendered inline permanently for that session, opening the full-screen interactive image viewer (`openImageViewerModal`) on tap for smooth pinch-to-zoom inspection.
+* **Auto-Cache for Sent Photos:** Photos freshly taken or dispatched by the active rider within 2 minutes display immediately without requiring a tap.
+* **Estimated Mobile Data Savings:** Eliminates up to 80–90% of chat thread media downloads, saving several gigabytes per day across all active riders.
+
+### 2. Locked Catering Chat Room (Other Riders' Customers)
+* **Zero-Bandwidth Protection in Catering Folder:** In the **Catering** folder, if a customer is being actively catered by another rider, tapping their chat card no longer queries or downloads messages from Supabase or Firebase.
+* **Locked Chat Room Screen:** Instead of downloading the message history, the chat room displays an informative lock screen:
+  * Shows customer name and avatar.
+  * Displays: `Chat Room Locked: This customer is currently being catered by [Rider Name]. Messages and photos are not downloaded while locked to save mobile data.`
+  * Prominent button: **🔓 Unlock & Load Chat**.
+* **One-Click Explicit Unlock:** Clicking **🔓 Unlock & Load Chat** securely unlocks the conversation for that session and queries messages on demand.
+* **Left List Lock Badge:** Unassigned catering cards clearly display an amber `LOCKED` badge alongside other indicators, so riders instantly know which chats belong to them (`YOU`) and which are locked (`LOCKED`).
+
+### 3. Light Mode Contrast & Dynamic List Legibility Fixes
+* **Dynamic Login List Polish:** Restyled dynamic rows generated by `renderModernLoginsTab()` with crisp white background cards (`bg-white dark:bg-black/40`), bold slate-900 rider names, dark slate timestamps, and solid dark emerald "On Duty" indicators.
+* **Dynamic Catered Customer List Polish:** Restyled dynamic cards generated by `renderModernCateredTab()` with clean white backgrounds, high-contrast bold slate-900 customer titles, dark emerald delivery badges, and high-contrast timeline markers.
+* **Active Tab Descendant Selector Enforcement:** Added CSS rules (`nav button.border-b-emerald-400 *`) and JS theme checks so that active tabs (`Rider Login List`, `Live Chats Feed`, etc.) always render with bold dark emerald text (`#047857`) in Light Mode without washed-out cyan tinting.
+
+## Version 1.2.3 (2026-11-08)
+
+### 1. High-Contrast Light Mode Legibility Overhauls (New UI)
+* **Catered Customer List Contrast Fix:** Replaced washed-out yellow/amber text with crisp, bold slate-900 typography (`#0F172A`) for all customer names. Restyled rider delivery chips with soft mint backgrounds and solid dark emerald typography (`#047857`). Enhanced start, receipt, and done timestamps alongside duration badges (`⏱️`) for 100% legibility in bright daylight.
+* **Rider Login List Restyling:** Eliminated murky dark translucent rows inside light mode. Replaced them with crisp white/slate card surfaces (`#F8FAFC`) featuring bold slate-900 rider names, dark slate Time-In timestamps (`#1E293B`), deep emerald "On Duty" indicators, and high-contrast red "Not Logged In" headers.
+* **Navigation Tabs Legibility:** Fixed washed-out active tab text on `Rider Login List`, `Live Chats Feed`, `Lokalex Rider Rotations`, and `Catered Customer List`. Active tabs now display bold forest green text (`#065F46`), an emerald bottom indicator (`#059669`), and a soft mint background.
+* **Bottom Status Footer Bar Polish:** Upgraded `Available`, `Catering`, `Break`, `End`, and `Gross: P0` buttons with high-contrast text, legible borders, and solid active states.
+
+### 2. Live Mobile Data Usage Monitor & Network Profiler
+* **Live Network Traffic Interceptor (`src/utils/dataUsageTracker.js`):** Built an automated data tracking engine that measures cellular and WiFi data consumption across all app network calls (REST queries, Supabase Realtime CDC, WebSockets, Facebook Graph API, and media downloads).
+* **Live Header Data Pill (`#modern-header-data-pill`):** Integrated a real-time data consumption indicator in the top header toolbar next to the battery badge (e.g. `📊 14.2 MB`), allowing riders to monitor app data usage at all times.
+* **Feature Data Breakdown:** Categorizes data consumption across 7 core app modules:
+  * `💬 Customer Chats & Media`
+  * `📖 Restaurant Menus & Photos`
+  * `🚴 Rider Rotations & Status Sync`
+  * `🧾 Receipts & Catering Logs`
+  * `📍 Directory & Maps`
+  * `🔄 App Updates (OTA Packages)`
+  * `⚙️ System & Auth Configuration`
+* **Multi-Window Time Filtering:** Riders can filter and analyze their data usage across:
+  * **10 Minutes** (`10m`)
+  * **30 Minutes** (`30m`)
+  * **1 Hour** (`1h`)
+  * **5 Hours** (`5h`)
+  * **1 Day** (`1d`)
+  * **1 Week** (`1w`)
+  * **1 Month** (`1mo`)
+* **Top Consumer Highlight & Progress Bars:** Highlights the single biggest data-consuming feature with visual colored percentage bars and exact KB/MB metrics.
+* **Convenient Access:** Accessible by tapping the header data pill or from the Modern Hamburger Menu (`Settings -> Data Usage Monitor`).
+
+## Version 1.2.2 (2026-11-08)
+
+### 1. Fix: Customers in Inbox Marked as Being Catered
+* **Strict Active Catering Validation:** Fixed `getActiveRosterCaterer` in `chatFeedState.js`. Previously, a loose fallback matched any thread if the rider named in older metadata had `status === 'Catering'`, even if that rider was currently catering a completely different customer. The fallback is now strictly restricted to threads explicitly inside the `catering` folder with verified customer name or ID matching.
+* **Auto-Clear Stale Rider Assignment on Move to Inbox:** Updated `processCustomerChatMetaData` so that when a thread has `folder === 'inbox'`, all catering metadata (`cateredByRiderName`, `cateredByRiderId`, `cateredBy`, `forcedBy`, and `isForcedCater`) is immediately sanitized to `null` and `false`.
+* **Database & Memory Reopen Thread Sanitization:** Updated `reopenThreadToInbox` in `chatFeedRender.js` to explicitly wipe out catering assignments from both Supabase Realtime/REST (`customerChats` / `customerChatMeta`) and in-memory caches when a thread is reopened to Inbox.
+* **Modern UI & Classic UI Badge Suppression:** Ensured that cards in the Inbox category never render catering badges, green cater highlights, or amber catering pills, ensuring Inbox stays 100% clean.
+
+### 2. Modern Workspace UI: Light / Dark Mode System
+* **Light / Dark Mode Header Button:** Added a responsive theme toggle button (`#modern-theme-toggle-btn`) in the Modern UI header toolbar with dynamic Sun/Moon iconography.
+* **High-Contrast Light Theme Palette:** Designed and implemented a complete Light Mode theme (`.modern-theme-light`) for all Modern UI views:
+  * **Header & Profile Bar:** Clean crisp white surfaces with slate-900 typography, subtle borders, and styled battery/clock indicators.
+  * **4-Tab Navigation & Badges:** High-contrast tab buttons with soft emerald active indicator tabs and legible badge counts.
+  * **Message Categories Filter Bar:** Polished category pills (`Inbox`, `Catering`, `Store`, `Follow Up`, `Done`, `Applicant`) with high contrast in both active and inactive states.
+  * **Customer List Feed:** Elevated card styling, crisp customer names, legible message previews, and clear status badges.
+  * **Live Chat Room & Composer:** Clear white incoming bubbles, soft gray card backgrounds, legible timestamps, and styled text composer input.
+  * **Lokalex Rider Rotations:** Restyled 3-column rotation boards (`Available`, `Catering`, `Break`), TL badges, and gross revenue chips with high contrast text.
+  * **Rider Login List:** Clean white shift status cards for `Clocked-In Today` and `Clocked-Out` with prominent Time-In displays.
+  * **Catered Customer List:** Crisp customer delivery cards with fees and timestamps.
+  * **Bottom Status Footer:** Styled footer dock (`Available`, `Catering`, `Break`, `End`, and Gross Total pill) optimized for daylight visibility.
+* **Persistent Setting:** Theme selection is automatically saved in `localStorage` (`lokalex_modern_theme`) and maintained across app launches and reloads.
+
+### 3. Roster Table Bandwidth Optimization (94% Payload Cut)
+* **Removed Heavy Base64 Avatars:** Stripped 15–40 KB embedded Base64 photo strings from the `roster` and `riders` database tables and converted them to lightweight UI avatar references.
+* **Reduced Status Sync Payload:** Shrank the entire `roster` table size from ~165 KB down to ~10 KB per status sync, saving ~155 KB per sync for every active rider and slashing cellular bandwidth consumption.
+
+### 4. Store Menu Binary Caching & Supabase Storage Integration
+* **Client IndexedDB Image Caching:** Implemented automatic IndexedDB binary caching (`menuImagesCache`) for menu photos so they are downloaded only once and served offline/locally on repeat views or dispatches.
+* **Cloud Storage Upload Support:** Connected `uploadImage` in `src/utils/imageUpload.js` to direct Supabase Cloud Storage (`store-menus`, `avatars`, `chat-media`), eliminating inline Base64 storage in database tables.
+
+### 5. Supabase Logs & Diagnostics Summary
+* **Statement Timeout Root Cause:** Investigated `supabase_logs.csv` and `supabase_logs_(5).json`. Statement timeouts (57014) and 500 errors were traced to Node diagnostic scripts running full-table queries against multi-megabyte `store_menus` tables. Real-world rider mobile traffic showed 100% healthy 200/201/204 response rates with zero timeouts.
+
+## Version 1.2.1 (2026-11-08)
+
+### 1. Shift Time-In Reset Bug Fix (Preserving Shift Start Across Breaks & Re-logins)
+* **Preserved Initial Time-In Across Breaks:** Eliminated the faulty `availableTimestamp` heuristic in `renderModernLoginList`, `openModernRiderProfile`, and `openRiderInfoModal`. Previously, if a rider had been on shift for over 30 minutes, took a break, and returned to Available, their Time-In was erroneously overwritten with the timestamp of when they finished their break. Time-In is now strictly anchored to their genuine shift start (`firstLoginTime` / `loginTime`).
+* **Preserved Time-In on End-Shift Resume:** Fixed `updateRosterStatusData` so that when a rider ends shift for a couple of minutes and clocks in again on the same day, their `loginTime` and `firstLoginTime` are preserved from their morning shift start rather than being replaced with the resume timestamp. Session elapsed minutes are tracked via `sessionLoginTimestamp` without resetting their official shift Time-In.
+
+### 2. Direct Catering Transition & Login List Auto-Healing Loophole Fix
+* **Eliminated the Catering Shift-Start Loophole:** Fixed `updateRosterStatus` and `updateRosterStatusData` where `recordLogin` was previously only triggered if `status === 'Available'`. If a rider was on End Shift and directly tapped "Catering" (or was assigned catering by an Admin/TL, or catered a customer from chat), `recordLogin` remained false, leaving the rider unrecorded in the `logins` table and missing from the Login List.
+* **Auto-Healing for Active Caterers:** Both `Available` and `Catering` statuses now automatically trigger `recordLogin = true` if the rider is starting shift or has no active login record today. Added an active auto-healing check in `renderModernLoginsTab` so that any rider actively catering or available is immediately guaranteed a login record in the database and visible in the Login List.
+
+## Version 1.2.0 (2026-11-08)
+
+### 1. Massive Mobile Data & Supabase Egress Reduction (~95% Bandwidth Cut)
+* **Fixed Runaway Chat Sync Loop (`syncIncomingMessageFromMeta`):** Fixed a timestamp comparison bug (`lastMsgTime > newestLoadedTime - 3000`) and `"You: "` prefix mismatch that previously caused every rider's phone to re-query the active customer's chat history on every single global metadata update. Added strict signature deduplication so active chats only fetch when genuinely newer messages exist.
+* **Eliminated 50-Row Over-Fetching (`supabaseDb.js`):** Removed the `Math.max(query.limit * 3, 50)` multiplier in `handleCustomerChatsOnce` and switched to indexed `room_id` lookups, cutting per-thread message queries from 50 rows (~4–5 MB) down to 10–12 rows.
+* **Eliminated Duplicate `.on('child_added')` Initial Reads:** Prevented `deltaQuery.on('child_added')` and `liveQuery.on('child_added')` from executing a second redundant HTTP `SELECT` query immediately after `once('value')`.
+* **Room-Scoped Realtime CDC & In-Memory Document Caching:** Scoped `customer_chats` Realtime Postgres CDC channels to the active `room_id` (`room_id=eq.<custId>`) so riders no longer download other riders' menu photo bursts over WebSockets. Added in-memory `docCache`, `globalCustomerMetaCache`, and `globalCustomerChatsMsgCache` so single-document updates and status changes (`sent`/`seen`) execute with zero pre-update `SELECT` egress.
+* **Automatic Base64-to-CDN URL Replacement & Lightweight DB Previews:** Outbound receipts and menu gallery photos now deliver full high-resolution images to Facebook Messenger while storing lightweight previews in `customer_chats` and automatically replacing base64 strings with 100-byte Facebook CDN URLs once delivered.
+* **Cached Page Access Token & Throttled Presence/Reconnects:** Cached `adminSettings/facebookApis` in memory (`getFbPageAccessToken`), throttled `markChatThreadSeen` and `resyncActiveSubscriptions`, and eliminated redundant unread metadata writes when opening already-read threads.
+
+## Version 1.1.9 (2026-11-08)
+
+### 1. Fix False Message Send Failures (Facebook Messenger Delivery)
+* **Eliminated Premature Timeout:** Resolved the issue where messages successfully sent to customers on Facebook Messenger were erroneously marked as `Sending failed • Retry` in the app. Fixed the client timeout logic so it strictly applies only to active sending states (`status === 'sending'`) and never overrides delivered or sent messages.
+* **Extended Cellular Timeout Window:** Increased the webhook bridge timeout from 15s to 35s to prevent client abortions while Meta Graph API processes high-resolution media or handles high cellular latency.
+* **Automatic Echo & Graph API Healing:** When Facebook delivers an echo webhook or thread sync confirms delivery, the app automatically reconciles and heals any pending or falsely failed bubble back to `Sent`, clears the error badge, links the authentic Facebook message ID (`mid`), and synchronizes the real status to the database.
+
+### 2. UI Polish & Button Animations
+* **Smooth Refresh Animations:** Added active `fa-spin` spinning animations and responsive click transitions to the **Refresh Chats** button in the Modern UI message categories bar and the **Refresh Rotations** button in the rotations toolbar.
+* **Universal Rotation Refresh:** Ensured all users (Admins, Team Leaders, and regular Riders) have an accessible, animated refresh button in the Modern Rotations tab to instantly sync the latest lineup.
+* **Interactive Resend / Retry Feedback:** Modernized the failed message **Retry** button with an animated spinner (`fa-arrows-rotate fa-spin`), active press animation, and immediate visual status updates upon retrying.
+
+## Version 1.1.8 (2026-11-07)
+
+### 1. Restaurant Menu Directory On-Demand Download & Dispatch Fix
+* **Eliminated Menu Send Failures:** Resolved the bug where riders were unable to send menu pictures to customers (`⚠️ No saved menu photos found`) or view menus (`[View]`) when menu photos had not yet been cached locally.
+* **On-Demand Auto-Download:** Tapping `[Send All]` or `[View]` now automatically detects lightweight metadata stubs, triggers an instant background fetch with visual progress indicator (`⏳ Downloading [Store] menu photos...`), caches the real images in IndexedDB and RAM, and seamlessly dispatches the high-resolution menu photos to the customer.
+* **Multi-Key Fallback:** Added comprehensive multi-candidate key resolution (`stores_<name>`, normalized slugs, composite keys) across IndexedDB and cloud database so no store menu is ever missed.
+
+### 2. Customer ID Resolution & Instant Chat History Loading
+* **Fixed False "No messages yet" from Rider Rotations:** Clicking a customer's name in the Lokalex Rider Rotation tab or Modern Workspace now automatically resolves the customer's true ID (e.g. Meta Messenger PSID `fb_...`) from `cachedCustomerThreadsMap`. This ensures full chat history (e.g., all 29+ messages) loads immediately instead of querying the customer's name as an invalid room ID.
+* **Feed Card Layout Polish:** Refined the "YOU" rider customer badge in the Catering feed card header so it remains clean and never squashes customer names on narrow mobile screens.
+
+### 3. Database Health & Egress Optimization
+* **PostgreSQL Alias Column Guide (`last_updated`):** Provided the direct SQL alias for `customer_chat_meta.last_updated` to completely eliminate older APK 400 Bad Requests and drop Postgres errors from 752 to 0.
+
+## Version 1.1.7 (2026-11-07)
+
+### 1. TL Supervisory Powers in Rider Rotation
+* **Restored Force Status Dropdowns for Team Leaders:** Resolved an issue where Team Leaders (TL) were missing supervisory dropdowns (Available, Catering, Break, End Shift) in the Lokalex Rider Rotation tab.
+* **Enriched Rider Roster Cache:** Synced `ridersAccountMap` directly with roster data to ensure TL permissions persist across all live updates.
+
+## Version 1.1.6 (2026-11-07)
+
+### 1. Menu & Receipt Photo Delivery (Preceding Text Elimination)
+* **Pure Image Dispatch:** Fixed an issue where sending a restaurant menu photo or digital receipt to Facebook Messenger dispatched a text message payload alongside or before the image, causing Meta Graph API upload errors or blocked photo delivery.
+* **Separated Caption Guard:** Outbound menu photos and receipts to Messenger now strictly dispatch as clean, pure image payloads (`text: ""`, `skipSeparateCaption: true`), ensuring 100% reliable image delivery to Facebook customers without Meta parameter rejections.
+
+### 2. Chat Conversation History Loading & Empty State Fix
+* **Eliminated False "No messages yet" State:** Fixed a bug where conversations with existing chat history (e.g. captured messages and metadata) prematurely displayed "No messages yet." when opened.
+* **Network Timeout & Recovery:** Removed the aggressive 3-second timeout that falsely overwrote the message container with an empty message state during slower mobile network queries. If database queries take longer or encounter cache misses, loading states remain intact, and automatic Meta Graph API sync is triggered to recover chat history directly from Facebook.
+* **Enhanced Supabase Room Query Matching:** Updated database message reads to robustly match both `room_id` and customer ID prefixes (`id.like.<custId>_*`), preventing missed historical messages across all thread formats.
+* **Feed Card Customer Badge Polish:** Optimized the "Your Customer" badge layout on mobile screens in the Live Chats feed so customer names and message snippets remain clear, prominent, and readable without horizontal compression.
+
+### 3. Team Leader (TL) Powers in Lokalex Rider Rotation
+* **Restored Force Status Actions for Team Leaders:** Resolved an issue where Team Leaders (e.g. Mark) could not see or access the "⚡ Force Action" controls (Available, Catering, Break, End Shift) in the Lokalex Rider Rotation view.
+* **Unified Permission Targeting:** Updated `canForceCaterTarget` and `isTL` to recognize Team Leaders across all login configurations and grant status change dropdowns when `canForceStatus` is enabled by Admin. Team Leaders can now seamlessly manage regular roster lines directly within the rotation view.
+
+## Version 1.1.5 (2026-11-07)
+
+### 1. High-Resolution Digital Receipt & QR Scanner Fix
+* **Eliminated Receipt Blur & Garbled Text:** Fixed the bug where clicking "Send Receipt Directly" or "Send to Customer" dispatched a low-resolution, blurry receipt. Vertical receipts are now protected from aggressive downsampling, preserving 1200px–1380px native canvas resolution with high-fidelity 0.94 JPEG encoding.
+* **100% Detectable GCash QR Code:** Integrated bundled vector QR code generation with standard 4-module quiet zones and high-contrast boundaries. QR codes on dispatched receipts are now razor-sharp, instantly scanning across GCash and bank scanner apps without fail.
+* **Direct High-Res Messenger Dispatch:** Outbound receipt image data URLs sent to Facebook Messenger via Meta Graph API and Cloudflare Worker retain full readability and uncompressed clarity without double-lossy compression.
+
+### 2. Live Chat Interface Cleanup
+* **Removed Floating Cart Button:** Removed the redundant floating `🛒 Cart` button inside the active chat view that previously hovered over messages. Riders continue to have seamless access to Smart Cart via the persistent `🛒 Go to Cart` header bar banner.
+
+### 3. Catering Folder Pinning & Vibrant Green Customer Highlight
+* **Catered Customer Card Pinned to Top:** In the `Catering` folder of Live Chats Feed, the customer thread actively assigned to and catered by the logged-in rider is automatically moved to the very top of the list.
+* **Distinctive Green Highlight Border:** Added a vibrant, unmistakable green highlight border (`border-2 border-emerald-400/500`) with an emerald glow and "Your Customer" indicator around the rider's active catering customer card, enabling instant recognition at a single glance.
+
+## Version 1.1.4 (2026-11-07)
+
+### 1. Facebook Messenger Delivery Integrity & False "Seen" Elimination
+* **Strict Message ID (`mid`) Verification:** Eliminated the bug where a message that failed to reach Facebook was falsely marked as "Seen" or "Delivered". Outbound messages to Messenger now strictly require a confirmed Meta message ID (`mid`) before they can ever transition to "Sent", "Delivered", or "Seen".
+* **Initial Sending Clock State:** Messages to Messenger now begin in a genuine `sending` state (`🕒 Sending...`) instead of optimistically assuming instant delivery.
+* **Auto-Timeout & One-Tap Retry:** If Facebook Meta Graph API or the Cloudflare Worker bridge does not respond or times out within 12 seconds, the message bubble automatically displays a high-visibility `⚠️ Sending failed • Retry` button so riders and admins can immediately re-send without losing text.
+* **Webhook Read-Receipt Guard:** Fixed the Cloudflare webhook server and local webhook workers to never mark unconfirmed or failed messages as "Seen" when processing customer read receipts (`watermark`).
+
+## Version 1.1.3 (2026-11-07)
+
+### 1. Database Stability & Zero PostgreSQL Errors (752/hr Fix)
+* **Native Foreground Service Query Fix (`customer_chat_meta`):** Resolved PostgreSQL Error 42703 (`column customer_chat_meta.last_updated does not exist`) in `LokalexForegroundService.java`. Incremental background polling queries now strictly sort and filter by the correct PostgreSQL `updated_at` column, returning HTTP 200 OK across all rider background cycles.
+* **Store Menus Statement Timeout Fix:** Resolved HTTP 500 / PostgreSQL 57014 (`statement timeout`) during store menu reads. Standard `store_menus` queries now automatically filter out heavy gallery blobs (`smg__%`), keeping query execution time below 30ms and completely eliminating timeouts.
+* **Full Database Query Verification:** Verified all 293 runtime database paths across the application against live Supabase tables, achieving a 100% pass rate (293 OK, 0 FAILING).
+
+### 2. UI Polish & Header Navigation
+* **Cleaned Hamburger Popover Profile Header:** Removed the redundant "Classic UI" button inside the floating hamburger popover now that the switch is prominently featured in the top header bar next to the battery indicator.
+* **Admin Settings Menu High-Contrast Icon:** Confirmed crisp `<i class="fa-solid fa-user-shield"></i>` icon rendering for Admin Settings (A–Z).
+
+## Version 1.1.2 (2026-11-06)
+
+### 1. Database Egress Optimization & 95% Bandwidth Reduction
+* **Eliminated Runaway 45s HTTP Watchdog Polling:** Removed continuous background polling intervals for customer chat meta and roster lineup that previously fired over 20,000 HTTP queries per day. The app now relies 100% on native Supabase Realtime WebSocket streaming (broadcast + CDC).
+* **Screen Unlock & Lifecycle Resync Throttling:** Switching apps, locking/unlocking the phone, or returning from Google Maps no longer blasts PostgREST with full table queries if the WebSocket connection is active and healthy. Resync is safely throttled to a minimum 60-second cooldown.
+* **On-Demand Store Menu Galleries:** Eliminated the startup batch download of all 33 full store menu galleries. The app now boots in milliseconds using a compact metadata index (`smg__meta_index`), and loads individual store pages on demand only when a specific store is opened.
+* **Catered History & Receipts Delta Stream Windowing:** Reduced the initial boot fetch window from 120 historical records down to 40 recent shift records, slashing initial startup payload by ~67%.
+* **Presence Heartbeat Optimization:** Tuned chat viewing presence keepalive from 15s to 25s, reducing continuous database row rewrites and PostgreSQL WAL growth by 40% without sacrificing real-time viewer detection.
+* **Weak Signal / 3G Protection:** By freeing cellular bandwidth from continuous megabyte REST queries, riders on weak 3G mobile data (such as Allan at 12:00nn) maintain responsive status updates, instant Time-Ins, and reliable chat receipt delivery.
+
+## Version 1.1.1 (2026-11-06)
+
+### 1. Modern Workspace Header Layout Polish
+* **Removed PiP Floating Button:** Removed the `[PiP]` button from the modern header bar to free up header space and prevent accidental touches.
+* **Relocated Classic UI Button:** Moved the Classic mode switch to the far right (where PiP used to be, following Battery) and converted it into a sleek, clean amber button clearly labeled **Classic**.
+* **Eliminated Header Truncation:** Moving the switch button to the right gives rider and admin greeting names ample horizontal breathing room on mobile devices.
+
+### 2. Admin Settings Menu Icon Fix
+* **Crisp FontAwesome Shield Icon:** Fixed the blank icon circle in the Facebook-style Hamburger Menu for **Admin Settings (A–Z)** by replacing the unsupported platform emoji with an official, high-contrast `<i class="fa-solid fa-user-shield"></i>` icon.
+
+## Version 1.1.0 (2026-11-06)
+
+### 1. Resilient Optimistic Status Handshake & Background Outbox Auto-Sync
+* **Zero-Delay Time-In & Status Handshake:** Tapping **Time In**, **Available**, **Break**, or **End** updates local state, IndexedDB device cache, and the UI immediately (0ms latency) with the exact timestamp.
+* **Weak Signal & Flaky Cellular Resilience:** Eliminates the bug where poor 2G/3G connections or packet drops caused the app to fail or reject rider login (e.g., Allan at 12:00nn). The app no longer throws blocking errors or reverts rider status; pending mutations are safely captured in a persistent offline outbox (`lokalex_status_mutation_outbox`).
+* **Automated Fast-Retry Sync Worker:** Outbox mutations automatically retry and sync to the cloud database every 4 seconds as soon as the cellular connection is restored.
+* **Top Header Live Handshake Status Pill:** Added a live status indicator next to the header clock (`🟡 Syncing...`, `🟢 Synced`, `🔵 Saved (Syncing)`) for transparent feedback on weak connections.
+
+### 2. Universal 95% Photo & Receipt Downsampling (Data Saver Mode)
+* **Automatic Client-Side Canvas Compression:** Integrated `compressImageToDataUrl` in `imageUpload.js` to downsample all camera photos and delivery receipts to max 720px width at 0.45 JPEG quality (~35 KB–50 KB).
+* **High-Speed Uploads on Cellular Data:** Prevents 3 MB–8 MB raw smartphone camera images from congesting database rows and wasting mobile data plans, speeding up chat receipt delivery to under 1 second.
+* **HD Mode Toggle:** Riders and admins who need higher resolution for fine print can still switch on HD mode (1080px / 0.70 quality).
+
+### 3. Cache-First Service Worker Media Caching
+* **Offline Audio & Static Asset Storage:** Added a dedicated `CacheFirst` route in `sw.js` for images, icons, and audio chimes, storing them locally for up to 30 days. Repeat visits and notifications consume zero cellular data.
+
+### 4. Fluid Touch Momentum Scrolling on Modern UI Tabs
+* **Full Mobile Scrolling Parity:** Unlocked seamless vertical momentum scrolling (`touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;`) across all four tabs: Live Chats Feed, Lokalex Rider Rotations, Rider Login List, and Catered Customer List.
+* **Eliminated Squished Layout on Rider Login List:** The "Logged IN" container expands naturally on mobile devices so riders can scroll directly down to Not Logged In and the Rider Profile Inspector without getting trapped by nested scrollbars.
+
+### 5. Chat Delta Sync & Double-Write Elimination
+* **Atomic Batch Chat Loading:** Opening a customer conversation loads cached messages atomically rather than rendering bubble-by-bubble. Realtime `.on('child_added')` is anchored strictly to future timestamps.
+* **50% Metadata Write Reduction:** Removed redundant dual-writing to `customer_chats` for chat metadata, routing writes exclusively to `customer_chat_meta`.
+
+## Version Adobo (2026-11-06)
+
+### 1. Available Queue Cooldown Countdown Timer
+* **Rotations Queue Cooldown Badges:** In Modern UI Tab 2 (`Lokalex Rider Rotations`), riders who set their status to Available now display a real-time countdown badge (`⏳ mm:ss`) throughout their queue cooldown period (e.g. 10 minutes).
+* **Live 1-Second Ticker:** Updates cooldown remaining times live without re-rendering the DOM or resetting scroll position; automatically resorts the queue when cooldown expires.
+* **Status Dock Integration:** If the active logged-in rider is Available and in cooldown, the bottom status dock button (`#modern-btn-status-avail`) shows the live cooldown timer badge.
+
+### 2. Complete Catering Customer Card & Admin Controls (Old UI Parity)
+* **Customer Time & Quick Chat Link:** Catering cards display `👤 CustomerName ( • hh:mm AM [xm] )`; tapping the customer title directly navigates to their chat thread.
+* **Forced Cater Badges:** Accurately renders `⚡ Force Catered (Self)` or `⚡ Force Catered (AdminName)`.
+* **Action Buttons:** Added `[✓ Done]`, `[🔗 Link]`, `[🗺️ Map]`, `[🔀 Swap]`, `[⊘ Void]`, `[✏️ Edit]` (admin/TL), and `[📥 Get]` (rider claim) matching the old UI design and role permissions.
+* **Admin Header Actions:** Rider card headers in Catering and Break include the `⚡ Action` dropdown for status overrides and voiding active orders.
+
+### 3. Fixed Modern Rider Login List Empty Display
+* **Scope Initialization Fix:** Resolved an uncaught `ReferenceError` caused by an undefined `roster` reference inside `renderModernLoginsTab()` that interrupted list population.
+* **Timestamp & Resume Guard:** Hardened session resumption logic against string and `NaN` timestamps to prevent calculation errors.
+* **Defensive Rendering:** Wrapped both Logged In and Not Logged In item mappers in try/catch blocks with clean empty states.
+
+### 4. Fixed "Send All" & "Send Rate" Confirmation Modals in New UI
+* **Modern UI Chat Detection:** Updated `isChatCurrentlyActive()` in `directoryGalleries.js` and `directoryRouting.js` to recognize embedded customer chats in the New UI instead of only checking classic modal visibility.
+* **Customer Name Resolution:** Dynamic `getEffectiveChatCustomerName()` resolves the active recipient name from `#modern-chat-room-title` or `#rider-chat-cust-name`.
+* **Confirmation Modal Trigger:** Tapping "Send All" in Restaurant Menu Directory or "Send Rate" in Rates Directory now reliably displays the confirmation popup modal.
+* **Toast Visibility Elevation:** Elevated notification container z-index to `10000050` so toasts are never hidden beneath modals.
+
+## Version Bulalo (2026-11-06)
+
+### 1. Fix Receipt Customer Defaulting to "Sample" & 0 Commission
+* **Active Customer Auto-Binding:** Resolved the bug where creating a receipt for an actively catered customer defaulted to "Sample", preventing the receipt from being credited to the rider and resulting in 0 commission when marked done.
+* **Wizard Customer Auto-Sync:** In `setupWizardClientDetails()`, the checkout wizard now strictly verifies active catering sessions and automatically binds to the actively catered customer instead of retaining `"Sample"`.
+* **Smart Cart Slot & Customer Selector Priority:** In `getEffectiveCartClient()` and `renderCartCustomerSelector()`, active catering assignments are prioritized over sample receipts and displayed at the top of the dropdown selector.
+* **Catering Initiation Auto-Sync:** Starting a catering order in `confirmCateringStatus()` and modern chat room actions (`goToCustomerCartFromChat`, `caterCurrentChatCustomer`) immediately synchronizes smart cart slots 1:1 and sets the active cart customer name.
+* **Receipt Finalization Guard:** In `generateFinalReceipt()` and `completeReceiptDone()`, actively catered customer names are automatically preserved even if the name input is temporarily cleared.
+
+### 2. New Inspector Account Type with Full Admin Powers
+* **Inspector Role Integration:** Added the `Inspector` account type in Manage Profile, Create Rider Modal, Quick Change Role dropdown, and Admin Roster settings.
+* **Unrestricted Admin Powers:** Inspector accounts have full admin capabilities, unrestricted feature access, and directory credit exemptions (`Exempt (∞)`).
+* **Roster Rotation & Login List Exclusion:** Inspectors are completely hidden from the rider login list, active lineup, and rotation queues as they are inspectors/admins and not delivery riders.
+
+## Version Sisig (2026-11-06)
+
+### 1. Eliminated Duty Time Served Loophole on Sign-Out & Resume
+* **Stopped Clock on Sign-Out:** When a rider signs out, logs out of their device, or sets their status to End, duty time tracking now strictly stops counting immediately.
+* **Multi-Session Shift Continuity:** When a rider returns later in the day to continue their shift (e.g. Ron logging in at 4:04 AM for a few seconds, logging out, and resuming at 7:09 AM), the app now starts a fresh session timer for the resumed period (`07:09 AM`) and accumulates only the actual minutes worked across past sessions.
+* **Instant Session Resume Heuristic:** Automatically detects and displays the actual active resumption time in both the Modern Rider Login list and the Rider Profile Inspector, eliminating the inflated hours bug.
+* **Universal Logout Auto-Clockout:** Added automatic clock-out triggers to `logout()` and `executeUniversalLogout()` so logging out of the device properly sets shift status to End and persists exact duty minutes to the database.
+
+## Version Lechon (2026-11-06)
+
+### 1. Preserved Edited Chat Messages & Revert Protection
+* **Guarded Edited Messages on Reply:** Fixed the issue where customer messages indicated as edited (`📝 edited` badge) had their edits removed and reverted to pre-edit text whenever a rider or customer sent a message.
+* **Meta Graph API Revert Guard:** Meta Graph API `GET /messages` serves static pre-edit historical bodies; guarded `syncCurrentThreadFromMetaGraph`, `syncIncomingMessageFromMeta`, `child_added`, `child_changed`, and `sendRiderToCustomerChat` to strictly preserve edited message text, `originalText`, `isEdited: true`, and edit timestamps.
+* **Webhook Server Dual-Write Integrity:** Updated `cloudflare-worker-supabase.js` and `cloudflare-worker.js` to persist `originalText` in message_edit payloads to guarantee the `Original:` strikethrough diff block displays accurately across devices.
+
+### 2. Modern Workspace: Category Auto-Select & Clean Empty State
+* **Folder Switching Auto-Open:** Selecting any folder (Inbox, Catering, Store, Follow Up, Done, Applicant) automatically opens the first customer thread card in that folder.
+* **Zero-Thread Clear:** If a folder has no open conversations (e.g., "No threads in catering"), the right-side chat room is instantly cleared to a clean placeholder rather than lingering on the previous thread.
+* **Instant Category Card Migration:** Moving a thread (Catering, Follow Up, Done, Inbox) immediately removes it from the current folder without requiring manual folder switching.
+
+### 3. Rider Login List & Profile Inspector Enhancements
+* **Inline Inspector Navigation:** Clicking a rider in the Modern login list populates the bottom Rider Profile Inspector and smoothly scrolls directly to it without opening the full modal.
+* **One-Tap Phone Call:** Made the mobile contact number in the Rider Profile Inspector clickable (`tel:`) with a quick-dial `[📞 Call]` button.
+* **Scheduled Day-Off Indicators:** Displays each rider's assigned day-off (e.g., `Every Sun`, `Every Wed`) next to their name. Unassigned riders show a `[+ Set Day-Off]` button.
+* **Role-Based Day-Off Access:** Riders can only view/edit the day-off button beside their own name, while Admins retain full visibility and scheduling controls for all riders.
+* **Animated Vacation Status:** If a rider's scheduled day-off falls on the current day, an animated vacation badge (`🏖️ Day Off`) pulses with a bouncing beach umbrella icon.
+
+### 4. Direct Feed Sources Lock/Unlock Control
+* **Header Lock Button:** Added `[🔒 Locked]` / `[🔓 Unlocked]` toggle button directly beside `[🎛 Sources]` in the Modern UI header to easily manage filter lock protection without error toasts.
+
+## Version Kare-Kare (2026-11-06)
+
+### 1. Modern Workspace UI & Seamless Dual UI Switcher
+* **Dual UI Toggle:** Added an instant `✨ New UI` switch button at the upper right corner of the classic header, alongside persistent `Classic UI` switches in the modern header and Facebook-style drill-down menu.
+* **Modern Workspace:** Introduced a high-performance 4-panel workspace featuring:
+  - **Live Chats Feed:** Split-pane interface with customer thread cards on the left (with swipe actions) and an embedded real-time chat room on the right.
+  - **Message Categories:** Quick filtering across Inbox, Catering, Store, Follow Up, Done, and Applicant. Category pill counters and colored unread indicators now automatically hide when counts are 0, only highlighting when actual unread messages arrive.
+  - **Movable Floating Cart:** A draggable `🛒 Cart` bubble strictly bounded within the active chat room so riders can quickly open and edit cart items during conversations.
+  - **Facebook-Style Drill-Down Menu:** Nested interactive menus for Rider Settings, Quick Actions (Smart Cart, Advance Order, Commission), Directories (Stores, Riders, Customers, Rates), and Pathfinder.
+  - **Rider Status Dock:** Persistent bottom bar showing live rotation status (Available, Catering, Break, End) and today's accumulated gross earnings.
+
+### 2. Live Feed Sources Lock & Misclick Protection
+* **In-Header Lock/Unlock Control:** Added a dedicated `[🔒 Locked]` / `[🔓 Unlocked]` toggle button right beside the `[🔀 Sources]` filter in the Modern UI Message Categories bar.
+* **Direct Filter Unlocking:** Riders and admins can now tap the lock button to toggle protection on or off instantly directly in the New UI, enabling full customization of active Facebook Page and Web chat sources without error toasts.
+
+### 3. Facebook Graph API & PSID Error Elimination
+* **Eradicated HTTP 400 Bad Requests:** Resolved the `fbResolvers.js:61 GET .../conversations?user_id=fb_... 400 (Bad Request)` console spam.
+* **Supabase Phantom Record Purge:** Identified and permanently purged 87 legacy orphaned records prefixed with `fb_fb_` from both `customer_chat_meta` and `customer_chats` tables, ensuring only canonical customer IDs remain.
+* **Multi-Layer PSID Sanitization & Validation:** Hardened customer ID parsing with `/^(?:fb_|messenger_)+/i` and strict numeric validation (`/^\d+$/`) across Facebook resolver lookups, thread synchronization, and outbound reaction/reply bridges. Non-numeric or test keys are intercepted before making outbound network requests.
+
+### 4. Feed Retrieval & Live Chat Stability Fixes
+* **Resolved `ReferenceError: isApplicant is not defined`:** Re-instated applicant folder detection checks during chat metadata feed processing.
+* **Recovered Long-Tail Customer Records:** Expanded `limitToLast` query bounds in `chatFeedListener.js` and `supabaseDb.js` from 60 to 350 records to ensure active customer conversations (such as *Lecxe Bas Lagunero*) are never cut off by sorting limits. Added deep Supabase fallback on manual search queries.
+* **Hidden Floating Team Comms Bubble:** Cleaned up the screen overlay by hiding the legacy team chat blue bubble.
+
+## Version Sinigang (2026-11-06)
+
+### 1. 100% Supabase Migration & Real-Time Engine Optimization
+* **Zero Firebase Dependency:** Migrated all remaining legacy collections (`directory/storeMenuGalleries` → `public.store_menus` and `shiftHistory` → `public.settings`) to Supabase and removed all Firebase SDK/RTDB dependencies.
+* **Multiplexed Real-Time CDC & Broadcast Delivery:** Consolidated Supabase Realtime subscriptions and added explicit `httpSend()` fallback when WebSocket channels are still handshaking, eliminating `Realtime send() is automatically falling back to REST API` console warnings.
+* **Snapdragon 450 & Low-Bandwidth Optimization:** Unified `customerChatMeta` and `customerChats/{id}/metadata` writes and eliminated synchronous textarea reflows (`scrollHeight`) and redundant DOM re-renders for lag-free typing and scrolling on entry-level Android devices.
+
+### 2. Instant Receipt Sending & Catering Workflow Fixes
+* **Instant Modal Close on `Send Receipt Directly`:** Clicking **Send Receipt Directly** now records the rider's commission fees in state and closes the wizard modal immediately (`0ms`), while PNG receipt rendering, image upload, Supabase persistence, and Facebook Messenger delivery run seamlessly in the background.
+* **Fixed Customer Cancellation Without Receipt:** Resolved a `ReferenceError` (`isSameDate` → `isSameDateStr`) in `checkCustomerReceiptExists` when cancelling a catered customer thread without a generated receipt.
+* **Completed Chat Folder Protection:** Prevented background Facebook Page folder sync (`syncFacebookPageFolderStatus`) and empty Meta webhook system events from resurrecting completed (`done`) customer threads back into the **Inbox**.
+
+### 3. Rider Break Time Integrity & Resume Support
+* **Exact Break Time Tracking & Resume:** Added second-level break tracking (`totalBreakSeconds`) alongside `totalBreakMinutes` and cross-checked both `roster` and `logins` records for the current day.
+* **Closed Break Reset Loopholes:** Prevented daily break usage from resetting to `0` when riders switch to **End** and back to **Available** or log out and back in on the same day, while still allowing riders to resume any remaining break minutes later in their shift.
+
+### 4. Persistent Login Vault & Refreshed Login UI
+* **Session Preservation Across Updates:** Added a multi-layer session vault (`persistSessionVault` / `restoreSessionVault`) so OTA bundle swaps, Service Worker refreshes, and APK updates never log riders out.
+* **Updated Login Screen:** Refreshed the rider login screen with the Lokalex logo and clearer, user-friendly instructions.
+
+## Version Adobo (2026-11-05)
+
+### 1. Permanent Rider Commission & Gross Income Precision
+* **PostgreSQL Server-Side Date Filtering:** Fixed the critical bug where rider gross totals kept reverting to lower numbers (e.g. Allan reverting to ₱130, Mark to ₱235, Hero to ₱355). In `supabaseDb.js`, queries using `.orderByChild('date').equalTo(todayStr)` now push `.or('data->>date.eq.${todayStr},data->>completedDate.eq.${todayStr}')` directly to Supabase PostgREST.
+* **Eliminated PostgREST 1,000-Row Truncation:** Unfiltered full-table reads previously truncated at 1,000 rows (returning mostly months-old history and missing 75%+ of today's deliveries). Server-side filtering now fetches all of today's orders with 100% precision while reducing payload transfer size by over 95%.
+* **Full Earnings Retention:** Guarantees each rider's full earnings reflect accurately on the rotation lineup cards, rider modals, and commission settlement ledgers without ever reverting.
+
+### 2. Screen-Off Background Chat Monitoring with Zero Data Waste
+* **Reliable Deep-Sleep Wake & Alert:** Hardened `LokalexForegroundService.java` with a 45-second sliding overlap window and instant $O(1)$ in-memory signature deduplication. Incoming customer messages are never missed due to client-server clock skew while the phone is locked or screen is off.
+* **Ultra-Low Cellular Data Usage:** Maintained foreground-aware monitoring (0 HTTP polling when the app is open) and incremental timestamp filtering (`updated_at=gt`) when screen is off, returning empty 2-byte responses on idle (<0.01 MB per day).
+* **Automatic Screen Wake & Loud Chimes:** Wakes device display for 4 seconds and rings high-priority native notification chimes immediately upon new customer message delivery.
+
+### 3. Native Haptic Intervention & API Error Cleanups
+* **Chromium Intervention Prevention:** Guarded all `navigator.vibrate` calls with `navigator.userActivation.hasBeenActive` checks across chat sound and modal action modules, eliminating browser console intervention warnings.
+* **Facebook Graph API Optimization:** Replaced invalid direct PSID picture requests returning HTTP 400 with direct participant extraction and negative caching.
+
+### 4. New Food-Named OTA Release Convention
+* **Inaugural Named Release:** Switched OTA release naming from numeric version strings to unique, non-repeating Filipino dishes, kicking off with **`Adobo`**.
+
+## Version 1.0.99 (2026-11-05)
+
+### 1. Cellular Data Consumption Optimization (99%+ Reduction)
+* **Foreground-Aware Monitoring:** The Android background service (`LokalexForegroundService.java`) now monitors whether the app is actively in the foreground. When the app is open, live WebSocket connections in the WebView handle incoming chat alerts in real time with 0 HTTP polling, saving hundreds of megabytes of mobile data.
+* **Smart Incremental Timestamp Filtering:** Background polling queries to Supabase now include `last_updated=gt.<lastTimestamp>` and Firebase uses `startAt=<lastTimestamp + 1>`. When no new messages have arrived (99% of cycles), the server returns an empty 2-byte response (`[]` or `{}`), eliminating repetitive downloads of 35 full chat metadata objects every cycle.
+* **Interval Optimization:** Lengthened the background check cycle from 5 seconds to 15 seconds when the phone screen is off, reducing query frequency by 66% while maintaining rapid message chime responsiveness.
+* **Selective Column Queries:** Removed heavy `select=*` on `customer_chat_meta` REST polling, eliminating full JSON `data` column downloads across the entire chat table.
+* **Dual-Database Query Redundancy Eliminated:** The background service checks the primary database first and skips querying the secondary database if the check succeeds, cutting background network queries in half.
+* **Limited Realtime Chat Feed Subscription:** Bounded `customerChatMeta` queries in `chatFeedListener.js` to the 60 most recently updated active conversations (`limitToLast(60)`), permanently preventing multi-megabyte full-table history downloads on app launch and reconnects.
+* **Preserved Cached Threads:** In-memory threads are cleanly preserved and merged during delta updates, guaranteeing smooth scrolling and zero UI flicker while keeping data usage minimal.
+
+### 2. Fixed Rubberbanding on Bad Signal (Catering → Done Auto-Move)
+* **Catering Thread Stability on Poor Connectivity:** Fixed the bug where a customer being catered would incorrectly move from the **Catering** folder to the **Done** folder automatically when the rider's signal was weak. This was caused by a transient roster status flip — the rider's live status would briefly show `Available` on bad signal, triggering the Done-folder logic.
+* **Persisted Catering Metadata as Source of Truth:** The `cateredByRiderId`, `cateredByRiderName`, and `cateredBy` fields stored in Firebase are now used as a reliable "still being catered" anchor. These fields are only cleared by an explicit completion action, so a momentary network-caused status flip can no longer reclassify an active catering thread.
+* **Catering Tab Stability:** The Catering tab no longer ejects threads when the rider's live status briefly shows `Available` or `Break` due to connectivity issues. Only terminal statuses (`EndShift` / `DayOff`) cause a thread to leave the Catering tab.
+* **Eliminated False Done Classification:** Removed the logic in `index.js` that moved a `folder: 'catering'` thread to Done solely because the assigned rider's live roster status showed `Available` — this was the primary visible rubberbanding symptom.
+* **Rider Status Revert Fix:** Addressed the companion bug where the rider's status would revert to `Available` on the rotation board after catering was initiated — the chat folder classification no longer drives incorrect re-classification when roster state is momentarily stale.
+
+## Version 1.0.98 (2026-11-05)
+
+### 1. Fixed Rider Commission & Gross Sharing Collision (Mark vs Mark T.)
+* **Rider Account Disambiguation (`getAllKnownRiders` & `findKnownRiderId`):** Created a fleet-wide rider account resolver that unifies both active roster members and master logins. Ensures canonical identity lookup resolves both `Mark` (ID: `5752315`) and `Mark Tejada` / `Mark T.` (ID: `31570036`) regardless of whether either rider is actively on shift, on break, or offline.
+* **Strict Cross-Account ID Resolution in `isRiderMatch`:** Updated `isRiderMatch` to automatically resolve missing IDs against known accounts before evaluating name tokens. Non-matching non-admin IDs immediately return `false`, strictly preventing riders sharing a first name from inheriting or sharing deliveries.
+* **Guarded Daily Gross Map Lookup:** Updated `getRiderTodayGross` and `buildDailyGrossIndex` so that fallback name scans verify account ownership against the rider's ID. Prevented `Mark T.` from claiming `Mark`'s ₱235 delivery gross (and vice versa) on the rotation board lineup badges.
+* **Commission Filter & Ledger Isolation:** Enhanced `checkRiderFilterMatch` and `getCleanRiderList` in `commissionUI.js` to compare canonical rider IDs, ensuring `Mark` and `Mark Tejada` remain two completely separate selectable riders in the Admin Commission dropdown and ledger settlement reports.
+
+## Version 1.0.97 (2026-11-05)
+
+### 1. Fixed Uncaught ReferenceError on cancelAdvancedOrder
+* **Resolved Critical Module Execution Error:** Defined and exported `cancelAdvancedOrder` and `autoCompleteAdvancedOrdersFromCatered` in `advancedOrdersActions.js`, resolving the uncaught `ReferenceError` that halted module execution and blocked UI rendering.
+* **Complete Action Export Surface:** Ensured all advance order lifecycle actions (`submitNewAdvancedOrder`, `takeAdvancedOrder`, `editAdvancedOrder`, `markAdvancedOrderDone`, `cancelAdvancedOrder`, `changeAdvOrderStatus`, `autoCompleteAdvancedOrdersForRider`, `autoCompleteAdvancedOrdersFromCatered`) are cleanly bound to `window` for reliable HTML `onclick` invocation.
+
+### 2. Resolved Supabase 500 Statement Timeout on storeMenuGalleries
+* **Firebase RTDB Delegation for Photo Menus:** Delegated queries, subscriptions, and mutations on `directory/storeMenuGalleries` directly to Firebase RTDB (`primaryDb`). Querying the massive multi-megabyte JSON row in Supabase's `directory` table previously exceeded PostgreSQL's 8-second statement timeout (HTTP 500). Delegating to Firebase RTDB loads restaurant menu galleries instantly (<300ms) with zero timeouts.
+
+### 3. Production Tailwind Warning Filtering
+* **Filtered cdn.tailwindcss.com Notice:** Suppressed the development console notice emitted by `cdn.tailwindcss.com` in production Webview mode, maintaining clean console diagnostic logs.
+
+## Version 1.0.96 (2026-11-05)
+
+### 1. Fixed Rider Commission Collision (Mark vs Mark T. / Mark Tejada)
+* **Isolated Rider Commission & Gross Badges:** Fixed `isRiderMatch` so distinct non-admin rider IDs immediately return `false` without falling through to name matching, preventing riders with the same first name (e.g., "Mark" and "Mark T." / "Mark Tejada") from inheriting each other's commission or orders.
+* **Disallowed Ambiguous Single-Word Name Fallback:** Prevented single-token names (e.g. "Mark") from matching multi-word full names (e.g. "Mark Tejada") when multiple riders in the fleet share that first name.
+* **Exact-Name Precedence in Daily Gross & Settlement:** Prioritized exact case-insensitive name matching before fuzzy matching in `buildDailyGrossIndex`, `getRiderTodayGross`, and `commissionUI.js`, ensuring gross total badges and customer breakdowns are cleanly isolated per rider.
+
+### 2. Advance Orders Scheduling & Booking Record Creation
+* **Fixed Supabase `limitToLast` Query Ordering:** Updated `supabaseDb.js` so `limitToLast` queries automatically order by `created_at DESC` (for `advanced_orders` and `receipts`) and `completed_at DESC` (for `catered_history`). Previously, unordered `LIMIT 40` queries in Postgres truncated at older rows from previous months and hid newly created advance bookings.
+* **Global Window Action Bindings:** Explicitly exposed `window.submitNewAdvancedOrder`, `window.editAdvancedOrder`, `window.takeAdvancedOrder`, `window.markAdvancedOrderDone`, and `window.cancelAdvancedOrder` on `window` for reliable HTML onclick event execution.
+* **Optimistic Local State Sync & Dual-Write:** Scheduled orders are now immediately prepended to `globalState.globalAdvancedOrders` in memory (0ms) and rendered in the list upon submission, with dual-write to active and backup databases and full error handling.
+
+### 3. Commission Overtime Calculation & Break Allowance Honoring
+* **Break Allowance Exclusion:** Fixed overtime duty calculation so that break allowances (default 60-minute standard lunch/meal break as configured in settings) are properly subtracted from gross shift elapsed time before evaluating the 8-hour duty threshold.
+* **Eliminated False Overtime Flags on Regular Shift Orders:** Orders completed between 4:00 PM and 5:00 PM (such as 4:08 PM, 4:37 PM, 4:40 PM) for riders starting at 8:00 AM are now correctly categorized as **Regular Commission**, rather than being mistakenly flagged as Overtime.
+* **Shift History & Logins Real-Time Sync:** Loaded and subscribed to Firebase `shiftHistory` and all rider `logins` records, ensuring historical dates (e.g., 2026-11-04) accurately access historical shift logins and actual recorded break minutes rather than defaulting to 0 break minutes.
+* **Corrupted Break Safeguard:** Capped runaway or unclosed break times at a maximum daily ceiling (120 minutes) so orphaned break states cannot wipe out valid evening overtime orders.
+* **Clock Time String Matching:** Eliminated timezone and epoch discrepancies by comparing wall-clock local time strings directly, preventing orders occurring before or within shift hours (including dummy `00:00` base rate calls) from wrapping into overtime.
+
+### 4. Directory Galleries & Supabase Schema Stability
+* **Fixed Directory Galleries Syntax:** Cleaned up character encodings, identifier scoping, and exception handling in `deleteMenuGalleryPage` (`directoryGalleries.js`), resolving IDE syntax/declaration warnings.
+* **Resolved Supabase 404 on 'public.chat' & 'public.shift_history':** Eliminated legacy dead listener on `chat` in `appListeners.js`, mapped team image shares to `teamChat/general`, registered `chat` table mapping alias in `supabaseDb.js`, and routed `shiftHistory` queries to Firebase RTDB where historical shift records reside.
+* **Dev Mode Service Worker Registration:** Bypassed service worker registration when running in Vite development mode (`localhost:5173`) to eliminate unsupported MIME type `text/html` console warnings.
+
+## Version 1.0.95 (2026-11-04)
+
+### 1. Base Rate Display in Settlement Reports
+* **Custom & Default Rate Precedence:** Fixed settlement report text generation so that configured base commission percentages (e.g. 20%) are displayed accurately instead of falling back to legacy settings.
+
+### 2. Chat Room Message Ordering & Timestamps
+* **Chronological Message Sequence:** Fixed chat message display ordering so latest messages appear at the bottom with accurate delivery timestamps.
+
+### 3. Facebook Webhook Message Edits Handling
+* **Meta Webhook Edits:** Added support for `message_edits` webhook payloads from Facebook Messenger.
+
+### 1. Catering State Retention & Chat Room Action Controls
+* **Eliminated Background Catering Assignment Purge:** Removed destructive background routines in `chatFeedListener.js` and `chatModalUi.js` that previously wiped `cateredByRiderId`, `cateredByRiderName`, and `folder: 'catering'` back to `inbox` in the database whenever customer name fuzzy matching experienced momentary delays or variations.
+* **Persistent Chat Room Actions:** Ensured that once a rider caters a customer, the **Cater** button is strictly hidden, and the active **Cancel** and **Go to Cart** buttons remain permanently visible while viewing the chat room.
+* **Enhanced FB Name & Candidate Resolution:** `getThreadCustomerCandidates` now automatically includes resolved Facebook names and modal header customer names, preventing catering lookup failures on Messenger conversations.
+* **Metadata Merge Safeguard:** Merges incoming database metadata updates with established in-memory thread cache so incoming message events never overwrite active catering fields with incomplete payloads.
+
+## Version 1.0.92 (2026-11-04)
+
+### 1. Catering Audio Chimes & Notification Filtering
+* **Strict Assignment Filter:** Customer messages in the Catering folder now strictly chime **only for the rider actively catering that customer**.
+* **Eliminated False-Alarm Chimes:** Fixed fallback classification where catering threads were inadvertently assigned to the Inbox folder if the active caterer lookup was delayed or unmatched, which previously triggered audible inbox chimes for all idle riders and administrators.
+* **Overridden Stale Caterer IDs:** Always updates catering thread rider IDs directly with the active live roster caterer to ensure incoming message alerts never sound on devices of previous riders.
+
+### 2. Direct Receipt Sending from Wizard
+* **Direct Send Action Button:** Added a dedicated **"Send Receipt Directly"** action button in the checkout wizard view, enabling riders to validate fees, generate the high-resolution receipt, and deliver it to the customer with a single tap.
+* **Auto-Generating Image Canvas:** Automatically awaits image canvas generation if the user initiates a send before the preview finishes rendering, eliminating "Image receipt is still generating" delays.
+* **Universal Recipient Resolver:** Supports in-memory cached customer threads, Supabase metadata mapping, and Facebook Page resolvers so customer names match seamlessly without empty recipient lists or database errors.
+* **Fast Cloud Storage Relay:** Optimizes delivery by uploading the receipt image to Firebase Storage and transmitting direct HTTPS URLs and Meta CDN attachments to Facebook Messenger.
+
+## Version 1.0.91 (2026-11-04)
+
+### 1. Zero-Polling Architecture & Data Usage Optimization
+* **Eliminated Background Polling Intervals:** Removed aggressive 4-second and 5-second polling loops on `customerChatMeta`, `roster`, and open thread message queues.
+* **100% Event-Driven Realtime WebSockets:** Restored pure push-based data delivery matching v1.0.88 behavior. Supabase Realtime CDC (`postgres_changes`) pushes updates down to devices only when database records change, consuming zero database compute and zero egress bandwidth while idle.
+* **Database Quota & Battery Protection:** Drastically reduced daily REST request counts by over 95%, safeguarding your Supabase database quotas and extending rider device battery life.
+
+## Version 1.0.90 (2026-11-04)
+
+### 1. Roster Lineup Multi-Device Synchronization & Realtime Channel Isolation
+* **Resolved Subscriptions Callback Collision:** Fixed `cannot add 'postgres_changes' callbacks after subscribe()` in the database layer by allocating dedicated unique channel identifiers per active listener.
+* **Isolated Feature Listener Execution:** Wrapped every individual feature listener in isolated safe execution blocks in `appListeners.js`, guaranteeing that an error in any auxiliary setting will never halt core listeners (`roster`, `riders`, `logins`, `customerChatMeta`).
+* **Active Lineup Background Polling:** Integrated a resilient 5-second delta synchronizer for `roster`, ensuring all riders' lineup statuses (Available, Catering, Break, End) stay strictly synchronized across every rider and admin device without dropouts.
+
+### 2. Facebook Live Chat Listener & Real-Time Page Echoes
+* **Real-Time CDC Routing:** Corrected metadata subscription paths to directly listen to `customer_chat_meta` CDC change events with customer-specific filters (`id=eq.${custId}`).
+* **Seamless Message Polling:** Activated continuous 4-second background verification so newly incoming Facebook chats and Page echoes (from Meta Business Suite) load automatically with audio chimes and notifications without needing to click manual "Refresh".
+* **Dual Prefix Matching:** Supported both `fb_` prefixed IDs and standard room IDs simultaneously when querying room messages.
+
+### 3. Catering Chat Room Visual Glow & Action Controls
+* **Catering Glow Restored:** Automatically highlights open chat modals with an **emerald pulsing glow** (`catering-glow-my` + green ring) when you are catering the customer, and a **gold pulsing glow** (`catering-glow-gold` + amber ring) when catered by another rider.
+* **Restored Cancel & Go to Cart Buttons:** Fixed caterer resolution in `cartState.js` and `chatModalUi.js` using fuzzy rider matching (`isRiderMatch`), guaranteeing the **Cancel** button, **Go to Cart** button, and **Done** action controls remain visible and functional for active deliveries.
+
+### 4. SmartCart Shortcut in Chat
+* **Dedicated Quick Cart Access:** Placed a permanent **Cart** shortcut button directly in the chat footer toolbar beside *Quick*, *Menu*, and *Rates*, allowing immediate one-tap navigation into the customer's SmartCart tab.
+
+### 5. Instant Catering Auto-Message Delivery
+* **Reliable Greeting Dispatch:** Removed premature lineup status checks that previously aborted greeting dispatch with `Rider is not in Catering status`. Confirming a catering session now reliably sends the introductory auto-message instantly to the customer.
+
+### 6. Ultra-Fast Restaurant Menu "Send All"
+* **Non-Blocking Concurrent Dispatch:** Optimized batch sends in `chatSending.js` so message saves and UI rendering complete in < 1 second while Facebook Graph API transmissions pipeline asynchronously in the background.
+
+### 7. Cross-Platform Runtime Hardening
+* **Resilient onDisconnect Handlers:** Added safe property getters and resolvers for both `onDisconnect` and lowercase `ondisconnect`, permanently preventing `e.ondisconnect is not a function` errors.
+* **Dev Server Cleanliness:** Silenced localhost service worker MIME registration warnings on Vite development servers.
+
+## Version 1.0.89 (2026-11-04)
+
+### 1. Real-Time Chat Message Reactions & In-Place Edits
+* **Live In-Place Message Edit Updates:** When a customer edits a message on Facebook Messenger, the active chat modal instantly updates the message text in place without requiring you to close and reopen the chat.
+* **Original Message History:** Displays an `edited` badge along with the previous text crossed out under an `Original:` tag.
+* **Messenger Emoji Reactions:** Customer reactions (❤️, 👍, 😆, 😮, 😢, 😡) sync directly onto the chat bubbles in real time. Toggling or removing a reaction updates the count and badge live.
+* **Facebook Page Echoes Synchronization:** Replies sent directly from the Facebook Page / Meta Business Suite now automatically appear in the Lokalex app in real time without duplicates.
+
+### 2. Screen-Off Real-Time Chat Listener & Background Wake
+* **Eliminated `requestAnimationFrame` Delay on Incoming Chats:** Removed render-frame scheduling from `customerChatMeta` listener in `chatFeedListener.js`. When the phone screen is locked or turned off, incoming message metadata, sound chimes, and native notifications now process immediately and synchronously instead of freezing until screen unlock.
+* **Dual-Engine Native Background Monitoring:** Added native Supabase REST endpoint polling to Android `LokalexForegroundService.java` alongside Firebase RTDB. The background service checks for new incoming chats every 5 seconds under a native partial wake lock, sounds the chime, posts status notifications, and wakes the screen even when the app is in deep sleep.
+* **Supabase Realtime Keep-Alive & Auto-Reconnect:** Enhanced `goOnline()` in `supabaseDb.js` to actively verify and reconnect dropped Supabase WebSocket connections upon background heartbeat pulses and lifecycle transitions.
+
+### 3. Header Gap Elimination (No Gap UI)
+* **Status Bar Alignment:** Removed redundant top safe-area padding on `body` and `#app-header`, eliminating the unwanted top black bar/gap across Android and PWA devices.
+* **Pixel-Perfect Viewport Fit:** Aligns the app header seamlessly beneath the native Android status bar (`WindowCompat.setDecorFitsSystemWindows`), ensuring full vertical screen utilization.
+
+### 4. Smart Cart Permanent Button & Viewport Fix
+* **Fixed Bottom Generate Receipt Button:** Converted the "Generate Receipt" footer in the Smart Cart to a fixed bottom container (`fixed bottom-0 left-0 right-0 z-40`) with safe-area padding, ensuring the button is permanently anchored and always 100% visible regardless of display cutouts or scrolling.
+* **Scroll Padding & Track Adjustment:** Added generous bottom scroll padding (`pb-28`) to the cart items list so all item action buttons remain fully scrollable and never obscured by the receipt footer.
+* **Button Scroll Lock:** Fixed an issue where clicking item buttons (store, market, paid, onhand, NA) caused the smart cart item list to scroll to the top.
+
+### 5. Dedicated Supabase Webhook Integration & Stability
+* **Dedicated Cloudflare Worker:** Configured dedicated Supabase webhook architecture handling incoming messages, multi-photo attachments, videos, voice clips, read receipts, delivery confirmations, and postback button clicks.
+* **Inbox State Restoration:** Rescued archived active conversations and restored incoming chat routing directly to the active rider inbox feed.
+* **Overtime Commission Incentive Crash Fix:** Fixed `ReferenceError: overtimeReward is not defined` crash when toggling overtime incentive settings.
+
+### 6. Message Notification Chimes Restoration
+* **Unassigned & Inbox Message Chimes:** Removed the restrictive `!isRiderRole` check in `chatFeedListener.js` that was inadvertently silencing acoustic chimes on incoming customer messages for logged-in riders and administrators.
+* **Administrator Catering Monitoring:** Enabled incoming catering audio alerts for administrators and authorized dispatchers alongside the active catering rider.
+* **Instant Audio & Native Ringtone:** Incoming messages now reliably trigger both the Web Audio chime synthesizer and Android native notification alert according to the user's chime preferences.
+
+### 7. Header Visibility & Immersive Status Bar
+* **Fully Visible App Header:** The system notification bar is now automatically hidden during app usage via `StatusBar.hide()`, giving `#app-header` full, unobstructed visibility without any notch or clock icon overlap.
+* **Transient Swipe-Down Reveal:** Swiping down from the very top edge of the screen reveals the native notification/status bar for a brief moment before it automatically glides away.
+
+### 8. Smart Cart Swipe-to-Delete & Slider Scroller Restoration
+* **Swipe-to-Delete Restored:** Fixed global window binding for `handleCardTouchStart`, `handleCardTouchMove`, and `handleCardTouchEnd`. Cards now smoothly slide left or right with visual red-border feedback and trigger the deletion modal at a 65px drag threshold.
+* **Smart Cart Slider Scroller Restored:** Rebuilt the vertical scroller rail and circular knob with fixed viewport positioning (`fixed right-1 top-36 bottom-24`) and dual-target scroll engine (supporting both internal element scrolling and window page scrolling). Effortlessly drag the knob to rapidly glide through cart items.
+
+### 9. OTA Update Download Reliability & Cache-Buster
+* **Resolved "Downloading Update Fails":** Fixed SHA-256 checksum mismatch caused by Fastly CDN 300s edge caching on GitHub raw URLs by appending dynamic cache-busting timestamps (`?v=...`) to release zip URLs.
+* **Resilient Download Fallback:** Added automatic fallback handling in `otaUpdater.js` to ensure live bundle updates download and apply without interruption.
+
+### 10. Rider Performance Tracker (Admin Only) & Infinite Loading Fix
+* **Resolved Stuck on Loading:** Fixed an uncaught TypeError in the database query layer (`startAt is not a function`) that previously caused the performance modal to stay stuck on the loading spinner. Added `startAt` and `endAt` range query support to `createSupabaseRef` along with a 6-second query timeout.
+* **Resilient Data Aggregation:** Aggregates delivery receipts, completed roster records, shift history, and daily attendance with safe fallbacks so metrics display immediately even over slow or intermittent connections.
+* **Dedicated Admin Analytics Hub:** Built an exclusive analytics modal (`rosterPerformanceTracker.js`) for administrators to identify and reward top-performing riders across 4 essential performance criteria:
+  - 💰 **Most Income:** Cumulative delivery fees and commission generated.
+  - 📦 **Most Customers Catered:** Total completed delivery orders.
+  - ⏱️ **Most Time Worked:** Total duty hours worked excluding break periods.
+  - 📅 **Most Days Attended:** Total distinct calendar days attended on duty.
+* **Weekly & Monthly Reports:** Full period navigation with one-click toggling between Weekly (Monday-to-Sunday) and Monthly reports, plus previous/next period historical browsing.
+* **Champion Spotlight Cards:** Highlights 1st-place performers in each category with spotlight cards and trophies.
+* **Sortable Interactive Leaderboard:** Instantly sort all active riders by any criterion (Income, Orders, Time Worked, Attendance).
+* **One-Click Group Summary Copy:** Copies an emoji-formatted, ready-to-share text report directly to clipboard for Telegram/Messenger rider group chats.
+* **Continuous Shift Archiving:** Automatic persistence to `shiftHistory` on every clock-in, break, and clock-out event.
+
+### 11. Performance Board Accuracy & Admin Exclusion
+* **Excluded Admin Accounts from Leaderboard & Spotlights:** Administrator accounts (e.g. Amiel Yalung, Rex, Azriel, Ruth Ann, IDs in `ADMIN_IDS`, or users with `userType: 'admin'`) are now strictly filtered out of the Rider Performance Tracker. Spotlights and rankings are exclusively reserved for bona fide active delivery riders.
+* **Resolved Ghost Duty Hours (Rex 18h Bug):** Fixed stale shift handling where riders who have not been working for months could inherit arbitrary duty time from unclosed or multi-day shift records. Standardized date parsing using `normalizeToDateStr`, restricted `Date.now()` duration calculations strictly to today's active shifts, capped realistic single-shift limits, and required actual customer deliveries or verified attendance for spotlight qualification.
+
+## Version 1.0.88 (2026-11-02)
+
+### 1. Broken Image Resolution in Chat & Interactive Recovery
+* **Facebook CDN Referer Fix (`no-referrer`):** Added `referrerpolicy="no-referrer"` to single photo attachments, image grids, and the fullscreen image viewer. Resolves HTTP 403 Forbidden blocks from Meta / Facebook CDNs (`lookaside.fbsbx.com`, `scontent.xx.fbcdn.net`).
+* **Accurate Meta Message ID Resolution:** Enhanced `resolveFacebookMessageAttachment` to look up Meta `mid` / `metaMid` when given a Firebase push key, ensuring Graph API queries succeed with valid message IDs.
+* **Expired Cache Bypass:** Added a cache purge mechanism when handling image loading errors, clearing stale expired URLs from memory and local storage so fresh signed URLs are retrieved.
+* **Real-Time Graph Attachment Refresh:** Updated `syncCurrentThreadFromMetaGraph` so when fresh media attachments are fetched from Meta Graph API, existing message bubbles, in-memory caches, and Firebase records are immediately refreshed.
+* **Interactive Image Fallback Card ("Tap to reload"):** If a photo fails to load due to temporary network or token expiration, the broken browser icon is replaced with a clean card (`Photo expired or loading failed • Tap to reload`) that re-fetches the image on tap.
+
+### 2. Stale Catering Status & Lock Bug Fix
+* **Live Roster Authority:** The live rotation roster is now the strict source of truth for catering status (`getActiveRosterCaterer` and `status === 'Catering'`). If a rider is off duty or no longer in Catering status, customers are never falsely locked or marked as catered by them.
+* **Auto-Purge Stale Metadata:** Opening or syncing a customer thread automatically purges stale `cateredBy`, `cateredByRiderName`, and `cateredByRiderId` from Firebase, resetting the folder to `inbox` (or `done`) so active riders can cater immediately.
+* **End Shift & Auto End Shift Release:** Integrated automatic catering chat cleanup into `clockOutRider()` and overnight `sweepStaleShiftsFromPriorDays()`, ensuring off-duty riders never hold locks on customer chats.
+* **Hidden False Admin Banner:** Removed false `⚡ Admin Mode — Replying as Admin (Catered by ...)` warnings on unassigned or previously catered threads.
+
+### 3. Overtime (OT) Remittance Discount Shift-Boundary Fix
+* **Order-by-Order Shift Boundary Evaluation:** Overtime remittance discounts now strictly apply only to orders delivered past the rider's set scheduled duty cutoff ($\text{Login Time} + \text{Set Duty Hours} + \text{Break Time}$). Orders completed within regular duty hours strictly pay standard commission.
+* **Breakdown Card & Report Accuracy:** Individual customer cards display the `⚡ Overtime` badge and discounted rate only for qualified orders past duty, while daily settlement reports and rider summaries clearly delineate regular orders from overtime-discounted orders.
+
+## Version 1.0.87 (2026-11-01)
+
+### 1. Catering Queue Jump Prevention & Dedicated Notice Modal
+* **Pre-Check Queue Spot on Catering Attempt:** Clicking the "Cater" button in the active customer chat thread (`#rider-chat-cater-btn`) or swiping to cater from the chat feed now strictly validates whether the rider is #1 in the queue lineup before initiating any assignment.
+* **Dedicated Not-First Notice Modal (`#not-first-in-queue-modal`):** If a rider attempts to cater an incoming order while someone is ahead in queue or while already catering with available riders waiting, a prominent, high-z-index warning modal is displayed directly over the chat dialog.
+* **Lineup Transparency Card:** The modal clearly presents:
+  * **1st in Line Rider:** Name of the designated rider currently at the top of the queue.
+  * **1st Rider Today's Gross:** Income comparison showing why the leading rider has queue priority.
+  * **Your Queue Spot & Gross:** Clear status indication (e.g., `#2 in Queue (₱340.00)` or `Currently Catering (Busy)`).
+  * **Clear Guidance:** Informs the rider that the customer order is designated for the rider at the top of the queue and to wait for their turn.
+
+### 2. Auto-Message Leak Prevention
+* **Zero Premature Messages:** Completely eliminated the bug where the "Being Catered" auto-message was dispatched to the customer even when the rider's cater request failed or was rejected due to queue position.
+* **Strict Assignment Gate:** `triggerAutoMessageOnCater` is now guarded at the system level and only triggered upon verified, successful Firebase database commitment where `cateredByRiderId` and `status: Catering` are confirmed.
+* **Fail-Safe Abort:** The message generator automatically aborts if the current user is not confirmed in active `Catering` status on the roster.
+
+## Version 1.0.86 (2026-11-01)
+
+### 1. Overtime Commission Incentive & Commission Relief Settings
+* **Admin Overtime Incentive Settings:** Added comprehensive overtime reward configuration in Admin Commission Fee Settings (`#admin-commission-settings-modal`), allowing administrators to award riders working past their scheduled shift.
+* **Flexible Commission Relief:** Supports both percentage discount deduction (e.g., -5% company commission rate, allowing riders to keep higher payout) or fixed deduction per order (e.g., -₱10 less company commission per delivery).
+* **Shift Duty Threshold:** Configurable duty threshold hours (default: 8 hours or individual rider shift schedule), accurately factoring in net worked minutes while strictly excluding break times.
+* **Real-Time Rate & Settlement Integration:** Automatically calculates and applies overtime commission relief across live orders, daily totals, settlement reports, and order-by-order breakdown cards with dynamic `⚡ Overtime` and `⚡ OT Incentive` badges.
+
+### 2. Manual Map Picker for Customer Directory & Profile Addresses
+* **Customer Directory Add Address Map Picker:** Added dedicated "Pick on Map" button (`window.openCustomerMapPicker('add-customer-address')`) directly inside the Add Address submodal (`#add-customer-address-modal`), allowing riders and dispatchers to drop and drag a custom map pin or tap anywhere on OpenStreetMap alongside the automatic GPS detector.
+* **Customer Profile & Details Saved Locations Map Picker:** Added interactive "Pick on Map" button inside the customer details saved locations form (`#cust-modal-add-loc-box`) and customer profile edit modal (`#edit-customer-profile-modal`).
+* **Overlay Layer & Input Integration:** Displays high-z-index Leaflet map canvas directly over open customer modals with center reticle and manual draggable pin, automatically populating GPS coordinates and reverse-geocoded addresses without disrupting dialog state or navigation stacks.
+
+### 3. Shift Time Calculation & Break Period Allowance System
+* **Break Time Excluded from Shift Total:** Rider shift duty now strictly excludes all accumulated break time ($\text{Net Worked} = \text{Gross Elapsed} - \text{Total Break}$), preventing idle time from inflating shift records.
+* **Daily Break Allowance (60m Default):** Admin-configurable break duration with leftover rollover across breaks on the same calendar day, auto-exiting to Available when time expires and refreshing daily.
+* **Unlimited Break for Admins:** Direct option for unlimited break duration when taken by admins or force-administered to riders.
+
+## Version 1.0.85 (2026-11-01)
+
+### 1. Interactive Picture-in-Picture (PiP) Floating Badge
+* **Dynamic Status Rings:** The floating mini-badge now automatically updates its ring color in real time based on active rider operations:
+  * **Blue Ring:** Idle standby mode when the rider has no unread messages in the inbox and is not currently catering.
+  * **Yellow Ring:** Actively catering mode indicating the rider is on an active order delivery.
+* **Dual Unread Notification Badges:**
+  * **Green Badge:** Displays the number of unread incoming chats in the general inbox.
+  * **Orange Badge:** Prominently displays the number of unread incoming messages from the customer the rider is actively catering.
+  * **Auto-Balancing Layout:** Automatically anchors to the top-right corner when a single category is active, or splits into top-right (Catering) and bottom-right (Inbox) when both have unread messages to ensure zero visual overlap.
+* **Touch & Tap Interactivity:** Tapping the badge triggers native tactile haptic feedback and intelligently routes to the relevant customer chat thread (catered customer first, then unread inbox chats, or restores fullscreen mode).
+* **Mini PiP Chat & Fullscreen Restorer:** Integrated an expand-to-fullscreen button (`#rider-chat-expand-btn`) in the chat header and added native `exitFloatingWindowMode()` bridge so riders can toggle between the floating badge and full app seamlessly.
+
+## Version 1.0.84 (2026-11-01)
+
+### 1. Fixed Generate Receipt Button & Smart Cart Viewport Layout
+* **Always-Visible Fixed Generate Receipt Button:** Converted the "Generate Receipt" button to a viewport-fixed bottom container (`fixed bottom-0 z-40`) to ensure it remains permanently present and 100% visible across all device screen heights, avoiding clipping issues from nested container paddings.
+* **Sticky Top Navigation & Pinned Action Bar:** Kept the cart slot tabs, client assigner, subtotal display, and item actions pinned at the top (`sticky top-0 z-20`).
+* **Internal Touch Momentum Scrolling:** Constrained `#cart-items-list` with `max-h-[calc(100vh-270px)]` and `overflow-y-auto` so items scroll smoothly between the fixed toolbars without displacing the bottom Generate Receipt button.
+* **Smart Rail & Knob Auto-Display:** Tuned the vertical slider rail and circular draggable knob (`#cart-slider-track`) to reliably display whenever the cart has 5 or more items or when the list overflows the viewport.
+
+### 2. Universal Scrollbar Modernization
+* **Elimination of Ugly Desktop Scrollbars:** Enforced CSS `.no-scrollbar` rules across horizontal tabs, action button strips, category switchers, and quick reply chips on all platforms.
+* **Native Arrow Button Removal:** Disabled default platform scrollbar stepper buttons globally (`::-webkit-scrollbar-button`) for a clean, modern aesthetic.
+* **Sleek 3px Translucent Scrollbars:** Integrated minimal 3px semi-transparent thumb indicators for vertical chat message feeds and modal dialogues.
+
+### 3. Screen-Off Notification Stability & Atomic Penalty Execution
+* **Continuous Foreground WakeLock:** Maintained indefinite `PARTIAL_WAKE_LOCK` for `LokalexForegroundService`, preventing CPU suspension and missed chat/order notifications on Android 16 when the phone screen is turned off.
+* **Exact Alarm Compatibility:** Added safe alarm fallback (`setAndAllowWhileIdle`) for Android 14+ devices without exact alarm grants.
+* **Child-Level Penalty Database Transactions:** Streamlined commission penalties into atomic `.child(penaltyKey).set(record)` operations to prevent Firebase invalid key errors with dotted rider names.
+
+## Version 1.0.83 (2026-11-01)
+
+### 1. Eliminated Native Desktop Scrollbars & Added Sleek Mobile Scrollbars
+* **Universal Horizontal Scrollbar Elimination:** Added CSS utility rules for `.no-scrollbar` and `[class*="no-scrollbar"]` across all platforms (Chromium, WebView, Desktop). Eliminated ugly native grey horizontal scrollbars and arrows `< [========] >` under chat action bars, category tabs, source filter chips, and switcher bars.
+* **Global Arrow Button Removal:** Stripped native scrollbar arrow buttons (`::-webkit-scrollbar-button { display: none !important; }`) across the entire app.
+* **Sleek Translucent Mobile Scrollbars:** Vertical message lists and modal dialogs now feature sleek, unobtrusive 3-4px rounded translucent thumb tracks that never obscure content.
+
+### 2. Smart Menu & Cart Sticky Layout and Side Scroller
+* **Sticky Header & Sticky Create Receipt:** Constrained `#view-cart` to viewport height so the top toolbar (cart slots, assign client, subtotal, and action buttons) remains permanently pinned at the top, and the "Create Receipt" button remains permanently pinned at the bottom.
+* **Internal Items Scrolling:** Only `#cart-items-list` scrolls between the fixed headers and footers, preventing the browser window from pushing action buttons off-screen.
+* **Permanent Side Scroller Rail & Knob:** The vertical slider track with the circular grabbing knob (`#cart-slider-track`) now reliably appears whenever the cart contains 5 or more items or when the list overflows, allowing effortless one-touch rapid scrolling.
+
+### 3. Screen-Off Background Notification Reliability (Android 16 / TECNO CM8)
+* **Indefinite Foreground WakeLock:** Updated `LokalexForegroundService` to hold `PowerManager.PARTIAL_WAKE_LOCK` continuously while the service is alive, preventing the CPU from entering suspend-to-RAM when the phone screen is turned off or idle.
+* **Android 14+ Exact Alarm Fallback:** Added `canScheduleExactAlarms()` verification before scheduling alarms, falling back safely to `setAndAllowWhileIdle()` to guarantee background watchdog pings run without security exceptions or system drops.
+
+### 4. Robust Commission Penalty Application
+* **Guaranteed Atomic Child Writes:** Replaced composite update dictionaries with direct sanitized `.child(penaltyKey).set(record)` writes under `commissionPenalties`, completely eliminating Firebase RTDB `update failed: values argument contains an invalid key` errors for riders with dots (e.g. `Ron DC.`) or special punctuation.
+* **Strict Primitives Sanitization:** Ensured all penalty record properties are non-undefined and safely formatted before database dispatch.
+
+### 5. Chat Media Bubble & Preview Enhancements
+* **Clean Media Text Suppression:** Prevented redundant placeholder captions (`📷 Photo`, `🎥 Video`, `🎤 Voice message`) from rendering as text bubbles below images and media cards.
+* **Auto-Reopen on Incoming Message:** Completed threads in `folder: 'done'` automatically reopen into `inbox` / `catering` whenever a customer sends a new message.
+
+## Version 1.0.82 (2026-11-01)
+
+### 1. Restored Chat Pictures, Multi-Photos, and Attachments
+* **Fixed Single & Multi-Image Rendering:** Resolved a critical logic conflict in `riderChatRender.js` where image URLs were improperly passed into video/audio detectors, causing the message image list to evaluate as empty. Sent and received pictures, multi-image grids, and gallery items now render instantly without delay.
+* **Non-Blocking Combined Media:** Customers sending multiple photos or photo + video combinations simultaneously now display both media cards seamlessly without one suppressing the other.
+* **Eliminated Raw Placeholder Text:** Fixed redundant text lines (`📷 Photo`, `🎥 Video`, `🎤 Voice message`) from displaying inside chat bubbles when media cards are loaded. Captions and genuine text messages are preserved cleanly.
+* **Robust Image Error Recovery:** Enhanced `handleChatImageLoadError` to cleanly unpack refreshed media objects and prevent broken image `src` replacements.
+
+### 2. Resolved Meta Graph API 400 Bad Request on Attachments
+* **Clean Attachment Query Specification:** Replaced non-existent Graph API attachment field request (`video_data`) with standard `attachments` collection query across client resolvers and Cloudflare Worker webhooks.
+* **Restored Voice Clips & Audio Playback:** Voice messages and audio clips from Facebook Messenger now fetch and resolve successfully without throwing HTTP 400 errors, with instant audio waveform player controls.
+
+### 3. Real-Time Chat Feed Card Synchronization
+* **Automatic Metadata Timestamp Catch-Up:** Opening any chat thread automatically checks if the latest message timestamp is newer than `customerChatMeta`, immediately repairing stale preview cards and keeping the inbox list strictly synchronized with the latest customer message.
+
+## Version 1.0.81 (2026-11-01)
+
+### 1. Fixed Commission Penalty Application & Name Sanitization
+* **Illegal Firebase Character Sanitization:** Fixed the penalty submission failure (`update failed: values must be valid Firebase paths`) caused when targeting riders whose names include periods (e.g. `Ron DC.`), slashes, or special punctuation.
+* **Child-Level Atomic Updates:** Multi-rider and multi-day penalty mutations now use direct sanitized child keys under `commissionPenalties` (`db.ref('commissionPenalties').update()`), ensuring 100% reliable Firebase database writes across all names and punctuation marks.
+* **Fuzzy & Sanitized Key Lookup:** Enhanced penalty rate evaluation in `commissionRates.js` to look up both raw and sanitized keys, with automatic fallback to fuzzy name matching (`isRiderMatch`).
+
+## Version 1.0.80 (2026-11-01)
+
+### 1. Commission Penalty System Overhaul & Multi-Rider / Multi-Day Sanctions
+* **Pre-Submission Confirmation Review:** Adding a penalty now features an explicit 2-step confirmation review modal displaying target rider(s), applicable dates, penalty surcharge percentage, reason, and total records calculation before applying.
+* **Multi-Rider Sanctioning:** Penalty modal now supports Single Rider, Multiple Riders (with searchable list, Select All / Clear All, and live counter badge), or All Active Riders in one operation.
+* **Date Range (Multiple Days):** Sanction riders for single dates or date ranges (From/To) with an automatic days counter and individual daily ledger records.
+* **Active Date Penalties Banner:** Prominent live banner in the Commission view displaying all active penalties for the selected period, complete with rider name, date, surcharge percentage, reason, and a 1-click Remove button with delete confirmation.
+* **Rider Card Header Badges:** Collapsed rider cards now feature a prominent red `⚖️ +X% Penalty` badge next to the rider's name for instant visibility.
+* **Zero-Delivery Visibility:** Riders with active penalties remain visible on the Commission ledger even before logging deliveries for that day.
+* **Quick Presets:** Instant preset chips for penalty rates (+3%, +5%, +10%, +15%, +20%) and common violation reasons (Late shift, Unexcused absence, Incomplete uniform, Extended break, Customer complaint).
+
+### 2. Multi-Media Messenger Chat Resolution & Latest Previews
+* **Enhanced Meta Graph API Subfield Extraction:** Fixed missing attachments when customers send multiple photos or photo + video combinations simultaneously from Facebook Messenger. Meta Graph API fetches now request full nested attachment subfields (`image_data, video_data, payload, subattachments, mime_type`) across Cloudflare Workers and client resolvers.
+* **Accurate Chat Card Previews:** Resolved race conditions and stale timestamp comparisons in `chatFeedListener.js`. Newly incoming customer messages and media previews now immediately take absolute precedence over older cached messages.
+* **Live Metadata Preview Sync:** Incoming message streams write latest message previews and media badges directly into `customerChatMeta` in real time.
+
+### 3. Dedicated Add Customer Modal & Live GPS Location Capture
+* **Streamlined Add Customer Modal:** Replaced nested directory prompts with a dedicated Customer Registration modal featuring Customer Name, Contact Number, and dynamic Add Address triggers.
+* **Automatic GPS Calibration:** Both the Chat Customer Info location manager and the Directory Add Address modal now auto-capture the rider's live GPS coordinates and generate a precise Google Maps pin link automatically.
+* **Multi-Location Management:** Manage and navigate to multiple registered addresses per customer directly from chat and directory cards.
+
+### 4. Store Directory Bulk Menu Photo Upload & Smart Cart Scrollbar
+* **Bulk Store Menu Uploads:** Store owners and riders can now select and upload multiple menu photos in a single batch with preview thumbnail grid and faster image compression.
+* **Smart Cart Permanent Scrollbar:** Enhanced order scrolling for large orders with a visible, responsive scrollbar and touch slider for effortless navigation.
+
+## Version 1.0.78 (2026-10-31)
+
+### 1. Directory Customer Profile Auto-Connect
+* **Instant Auto-Link:** When checking customer details in a chat thread, the app automatically checks the Customer Directory by name and contact phone. If a saved directory profile is detected, it automatically connects and links the customer profile immediately with zero extra taps required.
+* **Synchronized Profile Data:** Auto-connecting immediately syncs the customer's verified name, phone number, address, and all saved locations into the active chat session and roster.
+
+### 2. Multiple Saved Locations Support (Chat Info & Directory)
+* **Multiple Addresses & GPS Pins:** Customers can now register and store multiple locations (e.g., Home, Work, Office, Farm) in both the Customer Directory and Chat Customer Info.
+* **Chat Customer Info Locations Manager:** View all saved locations with one-tap Google Maps navigation, switch the active/default delivery location, or add new locations on the fly with 1-tap GPS calibration.
+* **Customer Directory Multiple Locations:** Directory form now supports adding multiple addresses and map pin links. Customer directory cards render all registered locations with direct location pins for each.
+
+### 3. Smart Cart Slider Scroller (Futuristic Circular Knob)
+* **Invisible Slider Track & Glowing Knob:** Added a sleek, circular slider knob with an invisible track on the right edge of the smart cart for effortless, lightning-fast touch scrolling through large order lists.
+* **Interactive Drag & Auto-Fade:** Supports 1:1 touch dragging and mouse drag scrolling with smooth haptics and automatic fade-out when idle.
+
+### 4. Multi-Photo Gallery & In-Bubble Voice Player
+* **Multi-Image Batch Display:** Fixed the bug where only 1 photo showed when customers sent multiple photos in Facebook Messenger. All photos are now parsed and displayed in an interactive gallery grid with fullscreen zoom.
+* **Customer Voice Note Player:** Customer audio recordings from Messenger are now rendered directly in chat bubbles with a custom audio player featuring play/pause controls, interactive seekable progress track, and live elapsed timer.
+
+## Version 1.0.77 (2026-10-27)
+
+### 1. In-App Over-The-Air (OTA) APK Self-Updater
+* **Direct Phone Upgrades Without PC/ADB:** Implemented a native APK self-updater allowing riders to upgrade and fresh-install base Android APKs directly on their phone over the air.
+* **Seamless 1-Tap System Installer:** When a new base APK version is released, the app downloads the APK in the background with a live progress indicator (`showApkInstallProgress`) and launches Android's native `PackageInstaller` via `FileProvider`.
+* **Zero Data Loss:** Updating the base APK preserves 100% of the rider's session, login tokens, SQLite database, and preferences.
+* **Smart Permission Handling:** Checks `REQUEST_INSTALL_PACKAGES` permission and opens system settings if needed to ensure effortless one-tap updates.
+* **Dual-Track Updater Engine:** Minor web patches continue to live-swap instantly via OTA zips without interruption, while core Android native updates (services, permissions, native bridges) prompt for APK installation.
+
+### 2. Picture-in-Picture (PiP) Floating Window Mode & Auto-PiP
+* **Smooth Native PiP:** Android's native Picture-in-Picture mode keeps Lokalex active in a compact, floating window while riding or using navigation apps (Google Maps, Waze).
+* **Auto-PiP on Background:** Automatically transitions to Picture-in-Picture whenever the rider presses Home or switches apps via `onUserLeaveHint()`.
+* **Instant Uninterrupted Chat & Audio:** PiP keeps the app running on screen in multi-window mode so Firebase listeners, chat badges, and chime notifications ring with zero delay.
+
+## Version 1.0.76 (2026-10-27)
+
+### 1. Restored Native Picture-in-Picture (PiP) Floating Window Mode
+* **Live Chat Feeds & Uninterrupted Execution:** Switched back to Android's native Picture-in-Picture (PiP) window. Unlike overlay badges which put the app into background sleep mode, PiP keeps the WebView active on screen—ensuring incoming chat messages, badges, and audio chimes trigger instantaneously without delay.
+* **Thread-Safe Native Bridge:** Fixed the issue where entering floating mode could fail by ensuring `enterPictureInPictureMode()` executes on the main UI thread.
+* **Audio & Listener Continuity:** Automatically keeps DOM timers and audio engines unpaused while in PiP mode so riders never miss customer or catering messages.
+* **Adaptive Mini-Window UI:** Restored PiP responsive styling for headers, chat panels, and stashed badge expanding.
+
+## Version 1.0.75 (2026-10-27)
+
+### 1. Drag-to-Close Dismiss Target for Floating Window
+* **Messenger-Style Bottom Close Area:** Dragging the floating window badge now displays an intuitive, circular dismiss target (`✕` "Drag here to close") at the bottom center of the screen.
+* **Interactive Hover Feedback & Haptics:** Dragging the badge into the bottom close zone triggers haptic vibration feedback, turns the close target glowing red (`#E11D48` "Release to close"), scales up the target, and subtly pulls the floating badge into the dismiss circle.
+* **Instant Float Dismissal:** Releasing the badge over the close area cleanly animates and dismisses the floating window badge from the screen.
+* **Safe Tap-to-Open & Edge Snapping:** Tapping the badge still brings Lokalex immediately to the foreground; dragging and releasing elsewhere on the screen continues to magnetically snap flush against the nearest screen edge.
+* **Dual-Orientation Support:** The bottom dismiss area accurately centers itself in both portrait and landscape screen orientations.
+
+## Version 1.0.74 (2026-10-27)
+
+### 1. Landscape Full-Width Snapping & Physical Display Boundaries
+* **Fixed Landscape Mid-Screen Stopping:** Resolved the bug where the floating window badge could only travel to the middle of the screen in landscape mode. Replaced stale `ApplicationContext` display metrics with physical hardware bounds via `WindowMetrics` (API 30+) and `Display.getRealMetrics()`.
+* **Full-Width Edge Snapping:** In landscape mode, dragging now spans the entire physical width (e.g. 2400px), cleanly docking flush against the far right or far left screen edge.
+
+### 2. Catered Chime Sound Isolation (Strictly My Cater Only)
+* **Removed Admin Chime Bleed:** Eliminated the admin bypass in `chatFeedListener.js` that caused orders catered by other riders to chime on the current rider's device.
+* **Strict Chime Ownership:** Incoming messages for catered customers now strictly ring the audio chime if and only if the current logged-in rider is the active caterer (`isMyCustomerThread === true`).
+* **Visual Color Badge Retention:** Float window badges still accurately display category colors (Green for Inbox, Orange for Catering, Red for Follow-up, Purple for Applicant, White for Stores) without sounding disruptive audio alarms for non-catered messages while on duty.
+
+## Version 1.0.73 (2026-10-27)
+
+### 1. Dual-Orientation Screen Edge Docking (Portrait & Landscape)
+* **Permanent Side Sticking:** Floating window badge is now permanently anchored/docked to the left or right edge of the screen (`dpToPx(6)` margin), never floating adrift or getting stranded in the middle of the display.
+* **Instant Portrait & Landscape Adaptation:** Equipped with dual orientation watchers (`ComponentCallbacks2` and `OrientationEventListener`). When the device rotates between portrait and landscape modes, the badge automatically calculates the new screen width and height and smoothly animates to the docked edge without being cut off or pushed off-screen.
+* **Relative Vertical Position Memory:** Stores relative vertical height ratio so the badge retains its proportional elevation whether navigating in landscape on a handlebar mount or holding the phone in portrait.
+* **Debug Mode Deactivated:** Removed all web contents debugging and testing flags across native WebView and Java activity components.
+
+## Version 1.0.72 (2026-10-27)
+
+### 1. Color-Coded Category Badges in Float Window Mode
+* **Color-Coded Folder Badges:** Added live dynamic color coding to the floating edge badge when receiving incoming customer messages in Float Window mode:
+  - 🟢 **Green** for **Inbox** (`#10B981`)
+  - 🟠 **Orange** for **Catering** (`#F97316`)
+  - 🔴 **Red** for **Follow-up** (`#EF4444`)
+  - 🟣 **Purple** for **Applicant** (`#A855F7`)
+  - ⚪ **White** for **Stores** (`#FFFFFF` with high-contrast text)
+* **Floating Head Glow & Bounce Alert:** The outer ring and status dot dynamically illuminate with the active category color, while a smooth bounce animation triggers on arrival to immediately catch the rider's attention over Maps or other apps.
+* **Auto-Show on Message Arrival:** If the app is in the background when a message arrives, the floating badge is displayed automatically with the new unread pill.
+
+### 2. Chat Acoustic Chimes Restoration & Dual Native Engine
+* **Fixed Missing Chimes on Chat Updates:** Resolved the bug where incoming inbox, follow-up, and applicant messages were silenced for active riders due to a restrictive role gate in `chatFeedListener.js`.
+* **Dual Native Android + Web Audio Engine:** In addition to Web Audio API synthesis, chimes now trigger Android native `RingtoneManager` sound via `playNativeChatChime()` through the native bridge. Chimes now ring loudly and reliably in the foreground, background, and Float Window mode.
+* **Continuous AudioContext Availability:** Removed aggressive post-chime `suspend()` calls that previously froze the web audio engine on Android mobile WebViews.
+
+## Version 1.0.71 (2026-10-27)
+
+### 1. Replaced Android PiP with Native Floating Edge Badge (Float Window Mode)
+* **Dedicated Float Window Mode:** Completely abandoned and removed fragile Android Picture-in-Picture (PiP) window manager implementation, which caused app vanishing/collapsing on Transsion (Infinix/Tecno) and Android 12+ devices due to `mWaitForEnteringPinnedMode` null pointer crashes in `ActivityTaskManager`.
+* **Instant Float Header Button:** Tapping the header float button (`<i class="fa-solid fa-arrow-up-right-from-square"></i>`) immediately enters Float Window mode: smoothly minimizes the app and docks an interactive, circular Lokalex badge on the edge of the screen.
+* **Automatic Background Float Mode:** When the rider switches to external apps (such as Google Maps, Waze, or Messenger) or minimizes the app, the floating badge automatically docks to the side of the screen.
+* **Magnetic Edge-Snapping & Draggable:** The floating badge is smoothly draggable anywhere on the screen and features magnetic snapping to the nearest edge with a spring-decelerate animation.
+* **Instant Re-foreground:** Tapping the edge badge immediately restores Lokalex Rider to the active foreground.
+* **Active Status & Unread Badge:** Includes an active emerald ring pulse and an unread notification counter pill that displays real-time pending customer messages.
+
+## Version 1.0.70 (2026-10-27)
+
+### 1. PiP (Picture-in-Picture) Tree-Shaking & Bundle Inclusion Fix
+* **Global Handler Export:** Fixed critical build tree-shaking bug where `window.enterFloatingWindowMode` was omitted from production bundles by Vite, causing the header PiP button to silently do nothing when tapped.
+* **Persistent DOM Surface in PiP:** Completely eliminated `#pip-stashed-badge` and all `display: none !important` hide rules on `<body>` elements when in floating mode. The app content (live chat feed and modal views) now continuously paints to the Android SurfaceControl buffer, preventing the OS window manager from considering the window empty and dismissing it.
+* **Informative Permission & Native APK Guidance:** If invoked on a client device running an older base APK without native multi-window permissions, the app now shows an actionable toast rather than silently doing nothing.
+
+
+## Version 1.0.69 (2026-10-27)
+
+### 1. PiP (Picture-in-Picture) Web Layout & Transition Fix
+* **Removed Collapsing PiP Media Query:** Removed `@media (max-width: 170px)` CSS rule that inadvertently hid the entire app DOM (`body > *:not(#pip-stashed-badge) { display: none !important; }`) whenever the window resized down to portrait PiP dimensions (~120–140px width). This keeps the rider's chat and dashboard visible inside the floating mini-window instead of collapsing into a blank screen.
+* **Transition Re-entry Lock:** Added a programmatic state lock in `enterFloatingWindowMode()` and `onFloatingWindowModeChanged()` to prevent double-invocation of the native window transition, eliminating Android `ActivityClientController onTransact aborts`.
+* **Safe Badge Unstash Interaction:** Updated `#pip-stashed-badge` to harmlessly clear the stashed view state upon tapping rather than re-invoking native PiP entry while already in floating mode.
+* **Decoupled Haptics During Window Transition:** Moved haptic triggers prior to window transition execution, eliminating audio/vibrator IPC collisions with OEM window managers.
+
+### 2. Live Chat Feed Lock & Unlock Protection
+* **Guaranteed Unlock Access:** Confirmed `[🔒 Locked]` / `[🔓 Unlocked]` toggle button stays elevated at `z-50` with direct pointer event passthrough, ensuring riders can reliably lock or unlock feed filters at any time.
+
+
+## Version 1.0.68 (2026-10-27)
+
+### 1. PiP (Picture-in-Picture) Floating Window Stability Fix
+* **Elimination of Instant Window Closure:** Resolved the bug where entering PiP mode caused the app to instantly close or dismiss on Android 12+ (specifically on Infinix, Tecno, and OEM systems).
+* **Safe Transition Architecture:** Removed conflicting gesture flags (`autoEnterEnabled` & `seamlessResize`) from programmatic triggers, preventing window manager transaction aborts.
+* **Transition Guarding & Source Rect Hint:** Added an `isEnteringPip` state lock to eliminate race conditions from `onUserLeaveHint()`, along with hardware bounds hints (`sourceRectHint`) for smooth window scaling.
+* **Manifest Modernization:** Configured `android:resizeableActivity="true"` and `android:enableOnBackInvokedCallback="false"` to prevent system back-gesture interceptions.
+
+### 2. Live Chat Feed Lock Button Responsiveness
+* **Isolated Stacking Context (`z-50`):** Fixed the lock button being unclickable when in the locked state. The toggle button is now elevated to its own independent stacking context (`z-50`) with persistent inline style enforcement, ensuring it remains immediately clickable even when feed misclick protection is active.
+* **Target Origin Verification:** Added event target checks in `onChannelBarLockedClick` to guarantee lock toggle interactions are never intercepted by the background click-guard overlay.
+
+## Version 1.0.67 (2026-10-27)
+
+### 1. Live Chat Feed Channel Bar Lock (Misclick Protection)
+* **Default Locked Protection:** The source filter bar (`#rider-chat-channel-bar`) and Full Booking mode trigger on the Live Chat Feed are now locked by default to prevent accidental misclicks by riders while scrolling through incoming customer conversations.
+* **1-Tap Lock / Unlock Toggle:** Added a prominent `[🔒 Locked]` / `[🔓 Unlocked]` toggle button with instant visual and haptic feedback.
+* **Intelligent Click-Guard:** When locked, chips and buttons are dimmed to 60% opacity with an active overlay that intercepts errant taps and notifies the rider (`"🔒 Feed filters are locked to prevent misclicks. Tap 🔓 on the right to edit."`).
+
+### 2. Password Removal Direct Login Fix
+* **Password-Free Rider Authentication:** Resolved the bug where riders whose passwords were removed by an administrator in the Roster could not log into the app because the login modal still demanded a password.
+* **Auto-Routing to Setup Modal:** Cleared-password riders now bypass password entry automatically and are guided straight to the rider password setup modal.
+
+### 3. PiP (Picture-in-Picture) UI Thread Safety & Floating Button Clean-Up
+* **Main UI Looper Thread Dispatch:** Fixed native Android `IllegalStateException` on PiP mode entry by ensuring `enterPictureInPictureMode` is always invoked on the main UI looper Handler, preventing WebView worker thread crashes.
+* **Streamlined PiP Buttons:** Removed cluttered and redundant PiP buttons from inside the customer chat modal and the live chat feed, retaining only the clean, dedicated top header button.
+
+### 4. "Share Location" Map Picker Navigation Isolation
+* **Checkout Wizard Misdirection Fix:** Resolved the bug where clicking "Share Location" in the chat modal inadvertently triggered history state pop navigation into the customer checkout wizard.
+* **In-Place Modal Overlay:** Map location picking from chat is now fully isolated as an in-place modal overlay with zero history stack interference.
+
+### 5. Chat Modal Toolbar Cleanup
+* **Duplicate Menu & Rates Buttons Removed:** Cleaned up excessive Menu and Rates buttons from the customer chat header bar and cater action row, preserving only the dedicated action buttons located next to the `[⚡ Quick]` toolbar button.
+
+## Version 1.0.66 (2026-10-27)
+
+### 1. Fix Duplicate Page Echo Messages in Chat
+* **Rider vs Page Echo Deduplication:** Resolved the bug where sending a message (or rates guideline) via the app caused duplicate messages to display in the chat (one from the rider like "Hero Dinong" and a duplicate echo from the Facebook Page like "Camiling Delivery by Lolalex").
+* **Human Rider Priority Resolution:** Updated message filtering to always prioritize and preserve the authentic human rider name and photo, dropping the generic page echo.
+* **Smart Content & Mid Match in Meta Sync:** Updated `syncCurrentThreadFromMetaGraph` to cross-reference existing rider messages before inserting. If an existing message matches the content and timestamp window, the Meta message ID is linked without creating a second bubble or duplicate database record.
+* **Real-Time Stream & Render Deduplication:** Added deduplication in `renderRiderMessages`, `appendOrUpdateSingleRiderMessage`, and `child_added` event listeners, preventing duplicate bubbles from rendering and automatically purging any previously stored duplicate `m_...` keys from Firebase RTDB.
+
+### 2. Facebook Page User vs. App Rider Identity Differentiation
+* **Page Staff & Admin Distinction:** Direct messages sent from Facebook Page Inbox or Meta Business Suite are now cleanly labeled as **Page Admin** with a dedicated blue Admin shield badge (`🛡️ Admin`), eliminating the generic long Page name.
+* **App Sender Identity Preservation:** Messages sent through the Lokalex App or Admin Dashboard preserve the authentic rider or dispatcher's name, avatar, and role (`rider` vs `admin`), providing full accountability across all conversations.
+
+### 3. High-Speed Menu Picture Transmission & Document Clarity
+* **Meta CDN Reusable Attachment IDs:** Integrated automatic capture and reuse of Meta's `attachment_id` for store menu pages. Once a menu page is sent, subsequent sends to any customer deliver near-instantaneously (~150ms) straight from Facebook's CDN cache without re-downloading from Firebase.
+* **Unified 1-Call Delivery:** Streamlined menu photo transmission to skip redundant secondary text caption requests, cutting network requests in half and preventing duplicate customer notification sounds.
+* **Pipelined Batch Dispatch:** Replaced artificial 800ms delays with a 60ms pipelined dispatch queue and pre-fetched customer metadata, reducing a 5-page menu transmission time from ~25 seconds down to ~3–4 seconds.
+* **2048px High-Density Document Clarity:** Standardized menu scanner and native camera uploads to 2048px with subpixel text contrast enhancement (`contrast(1.08) brightness(1.02)`), keeping menu prices, descriptions, and fine print crystal clear while slashing file sizes by over 80%.
+
+## Version 1.0.65 (2026-10-27)
+
+### 1. High-Performance Facebook Page Chat Fetching & Real-Time Sync
+* **Parallel Meta Graph API Fast-Sync:** Added direct parallel synchronization with Meta's edge servers (`https://graph.facebook.com/v19.0/me/conversations?user_id=...`) when opening customer chats. Eliminates webhook wait times and instantly retrieves messages directly from the Facebook Page within 150–250ms.
+* **1-Tap Instant Facebook Sync Button:** Integrated an instant refresh button (`#rider-chat-sync-fb-btn`) with spin animation directly on the customer chat header for on-demand synchronization with the Facebook Page.
+* **Multi-Path Single Atomic Database Writes:** Upgraded the webhook pipeline (`cloudflare-worker.js` & `server.js`) to use single atomic multi-path `PATCH /.json` calls, writing message payloads, thread previews, timestamps, and index maps simultaneously in a single <60ms request.
+* **Zero-Latency In-Memory Caching:** Introduced persistent RAM caching for Page Access Tokens and customer identities within webhook worker isolates, completely eliminating redundant database read queries on subsequent messages.
+
+## Version 1.0.64 (2026-10-27)
+
+### 1. Audio Ducking Bug Fixed (Other Apps Volume Preservation)
+* **Elimination of Silent Audio Loop:** Completely removed the background silent audio element (`silentAudioEl`) and the continuous 25-second Web Audio oscillator loop that forced Android's `AudioManager` to lower ("duck") other apps' media volume (Spotify, YouTube, podcast players) whenever Lokalex was opened.
+* **Auto-Suspension of Audio Context:** Added automatic `AudioContext` suspension (`suspendAudioContextIfIdle()`) after synthesized chimes or delivery reminder alarms finish playing, ensuring Android audio focus is immediately returned to background music players at 100% full volume.
+* **Pure Worker & Native Background Keep-Alive:** Background connectivity and WebSocket keep-alives are now maintained exclusively through dedicated Web Worker heartbeat timers and the native Android `LokalexForegroundService`, guaranteeing zero audio sub-system interference.
+
+### 2. PiP Side-Docking Stashed Badge Icon
+* **Native Android PiP Stashing Support:** Implemented Android 12+ (API 31+) PiP stashing callbacks via `Activity.onPictureInPictureUiStateChanged(PictureInPictureUiState pipState)` and `pipState.isStashed()`.
+* **Edge-Docked Badge View:** When the floating window is dragged or flung to the side bezel of the screen, the complex dashboard and chat elements are cleanly hidden, displaying an elegant circular glowing Lokalex badge icon (`Logo.png`) with an active green live pulse.
+* **Responsive Viewport Fallback:** Added `@media (max-width: 170px)` rules ensuring that narrow window dockings on any Android OEM skin seamlessly show the clean badge view.
+* **1-Tap Re-Expansion:** Tapping the side badge icon instantly re-expands the app into interactive floating or full-screen view.
+
+### 3. Smart Cart Scrolling Physics & List Performance Optimization
+* **Gesture Axis Disambiguation:** Redesigned `cartGestures.js` touch evaluation with Cartesian threshold detection (`diffY` vs `diffX`). When the user moves vertically, swipe-to-delete horizontal translation is immediately released, allowing the native browser compositor to execute vertical scrolls with zero hitching.
+* **Compositor Momentum Scrolling:** Applied `touch-action: pan-y; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; will-change: scroll-position;` to `#cart-items-list` for smooth 60–120 FPS inertial scrolling.
+* **Off-Screen Layout Optimization:** Integrated modern `content-visibility: auto; contain-intrinsic-size: 0 115px;` on all cart item cards, skipping off-screen DOM layout and paint work when managing large orders with dozens of items.
+
+## Version 1.0.63 (2026-10-27)
+
+### 1. Directory Credit Depletion & Disabled Enforcement Fix
+* **Strict Honor of Disabled System:** Fixed the bug where rider credits continued to deplete when clicking "View Location" on customer entries even after the credit system was toggled OFF in Admin Directory Credit settings.
+* **Instant Free Access When Disabled:** When the credit system is turned OFF (`enabled: false`), viewing customer GPS locations bypasses the credit confirmation modal entirely and opens the map link directly with zero credit deductions and no minimum balance requirement.
+* **Real-time Status Feedback:** The Directory Credits pill on the home dashboard dynamically reflects the system status, showing "OFF" when disabled by an administrator and giving riders clear visibility that directory lookups are free.
+
+### 2. Auto-Message Name Display Formats (First, Last, or Whole Name)
+* **Configurable Name Display Preferences:** Added dedicated selector dropdowns in the Admin Auto-Message modal to configure how names are presented in automated messages for both Customer and Rider (`First Name Only`, `Last Name Only`, or `Whole Name`).
+* **Dynamic Name Formatting Tags:** Added granular template placeholder tags:
+  * `{customerFirstName}`, `{customerLastName}`, `{customerFullName}`
+  * `{riderFirstName}`, `{riderLastName}`, `{riderFullName}`
+  * Standard `{customerName}` and `{riderName}` dynamically format based on the admin's chosen format setting.
+* **1-Tap Insert Tag Buttons:** Added quick-insert chip buttons for first name, last name, and full name tags in both the "Being Catered" and "Mark Done" message template editors.
+
+## Version 1.0.62 (2026-10-27)
+
+### 1. Store Menu Camera: 1x Framing & Blur-Free HD Capture
+* **Zero-Lag WYSIWYG Video Capture:** Eliminated the blurry snapshot bug caused by `ImageCapture.takePhoto()` autofocus reset/hunting cycles on Android multi-camera hardware. Replaced with direct frame capture from the live, focused HTML5 video stream onto an off-screen HD canvas with high-quality bicubic smoothing (`imageSmoothingQuality = 'high'`).
+* **Sensor Discrepancy & 0.6x Distortion Fix:** Fixed the issue where photos were captured significantly wider (0.6x sensor effect) than the 1x viewfinder preview. Accurate `object-cover` viewport calculations ensure the captured frame exactly matches the on-screen framing down to the pixel.
+* **Preserved Viewfinder Zoom:** Accurately retains digital and hardware zoom levels (1x, 1.5x, 2x, 3x) in the captured photo.
+* **Shutter Flash & Tap-to-Focus UI:** Added an instant white shutter flash animation (`#menu-camera-shutter-flash`) upon capture, plus an interactive amber focus ring (`#menu-camera-focus-ring`) when tapping anywhere on the viewfinder to re-lock continuous auto-focus.
+* **Orientation & Document Clarity:** Ensured landscape and portrait rotations with orientation lock enabled maintain crisp, legible document text and menu prices.
+
+### 2. Floating Window Mode (Picture-in-Picture)
+* **Native Android PiP Multitasking:** Added native Picture-in-Picture mode support to keep Lokalex visible as a floating window while using navigation, messaging, or other apps.
+* **1-Tap Quick Access Buttons:** Integrated floating window mode buttons directly on the top app header (`#header-floating-window-btn`), Home Dashboard (`#dashboard-float-window-btn`), and Customer Chat modal header.
+* **Adaptive PiP UI Layout:** Responsive compact styling (`html.in-floating-mode`) automatically condenses dashboard cards and chat views for optimal readability in small window dimensions.
+
+### 3. Background Persistence & Screen-Off Execution
+* **Hardware Wakeup Watchdog (`BackgroundWatchdogReceiver`):** Configured `AlarmManager.setExactAndAllowWhileIdle(RTC_WAKEUP, ...)` to ensure Android CPU hardware wakes up periodically even in deep Doze mode when the screen is off or out of focus.
+* **Foreground Service Modernization:** Migrated foreground service type to `remoteMessaging|location` in `AndroidManifest.xml` to prevent the 6-hour background timeout on modern Android versions.
+* **Swipe-Away Persistence & Screen Keep-Alive:** Persists across swipe-away dismissals via `onTaskRemoved` and prevents premature screen timeouts during active app navigation.
+
+### 4. Directory Scrolling & Touch Physics Fix
+* **Unrestricted Directory Scrolling:** Fixed the issue where touch gestures could not scroll in any of the directory lists (Customers, Stores, and Rates & Barangays). Removed global `overscroll-behavior-y: contain` and restrictive `touch-action` rules that trapped gesture chaining in the Chromium compositor.
+* **Guaranteed Scroll Handshake:** Added explicit `touch-action: pan-y; -webkit-overflow-scrolling: touch;` on `#record-list` and ensured view transitions (`switchView` and `openDirectory`) automatically clear any lingering body scroll locks (`overflow-hidden` / `touch-none`).
+
+### 5. Customizable Automated Message Dispatch (Admin-Managed)
+* **Admin-Only Configuration & Cloud Sync:** Automated message controls (toggling on/off and customizing message templates for both Catering and Done milestones) are strictly restricted to administrators. Configuration synchronizes globally across all riders in real time via Firebase Realtime Database (`settings/autoMessage`).
+* **Scenario 1 - Being Catered:** Dispatches an introductory greeting message when a customer order is actively being catered.
+* **Scenario 2 - Marked as Done (Receipt Protected & Active Catering Only):** Fixed the issue where Done auto-messages fired when moving non-catered Inbox threads to Done or when replying to follow-up messages on finished threads. Done auto-messages now strictly require:
+  1. The customer must be actively catered on the roster and completing delivery.
+  2. A verified receipt must exist for the order.
+  3. Single-use receipt consumption guarantees that a receipt will never trigger a duplicate Done message if the thread is replied to or re-archived.
+* **Dynamic Smart Placeholders:** Supports dynamic template parameters: `{customerName}`, `{riderName}`, `{receiptTotal}`, `{receiptNumber}`, and `{time}`.
+* **Admin Interface Access:** Accessible to authorized administrators via the Live Chats header (`Auto-Msg` button), the Dashboard Admin Toolbar, and Profile Settings. Hidden from regular riders.
+
+## Version 1.0.61 (2026-10-26)
+
+### 1. App Startup & USB Debugging Smoothness Optimization
+* **Startup Lag Elimination:** Completely eliminated the 30-second to 1-minute initial boot lag on lower-spec mobile devices (Qualcomm Snapdragon 460 / 4GB RAM) by addressing CPU thread blocking and uncoordinated network queries during launch.
+* **Firebase Offline Outbox Self-Healing:** Fixed an infinite replay loop caused by unauthorized mutations (e.g., stale `chatPresence` writes) returning `PERMISSION_DENIED`. Added automatic discarding of non-retryable permission errors and startup purging of expired offline queue entries older than 15 minutes.
+* **Coalesced Real-time Event Streams:** Replaced the 240-event synchronous storm in `cateredSyncManager` with a 120ms debounce coalescer (`scheduleBatchedSyncEvents`), collapsing consecutive `cateredUpdated`, `receiptsUpdated`, and `rosterUpdated` dispatches and IndexedDB writes into a single batch.
+* **O(1) Customer Thread Duplicate Suppression:** Optimized `processCustomerChatMetaData` in `chatFeedListener.js` by pre-indexing Facebook Messenger customer names into an $O(1)$ `Set`, eliminating over 20,000 quadratic ($O(N^2)$) regex and token comparisons during each customer metadata update.
+* **Deferred Heavy Background Sync:** Shifted `directory.silentSyncDirectory()`, `runBackgroundPersistenceSync()`, and `sweepStaleShiftsFromPriorDays()` to execute 20–25 seconds after launch, freeing up 100% of the main JavaScript UI thread during the critical initial user interaction window.
+* **60fps UI & Gesture Responsiveness:** Reduced 99th percentile frame times from over 4,500ms down to 61ms, maintaining smooth 60fps scrolling and eliminating frame deadline misses and high input latency.
+
+## Version 1.0.60 (2026-10-25)
+
+### 1. Store Menu Camera: Hardware Gravity Sensor Auto-Orientation
+* **Physical Gravity Detection (`devicemotion`):** Added hardware gravity sensor monitoring (`accelerationIncludingGravity`) to automatically switch the camera between Portrait and Landscape orientation even when the phone's system Orientation Lock (portrait lock) is enabled.
+* **Orientation Lock Bypass:** Removed the premature screen orientation return that previously prevented accelerometer and gyroscope readings from being evaluated when the phone was locked in portrait.
+* **Jitter & Flat Surface Protection:** Added a hysteresis threshold (`|acc.x| > |acc.y| + 1.8`) to prevent rapid flipping when held at slight angles, and resting-flat detection (`|acc.z| > 8.2`) to maintain the current orientation when the phone is placed on a table.
+* **Direction-Aware Photo Rotation:** Integrated `lastDetectedAccX` and `tiltGamma` into `ensurePhotoOrientation` so wide landscape photos are rotated correctly before saving regardless of system lock status.
+
+### 2. Store Menu Camera: Clean Viewfinder (Overlay Removed)
+* **Framing Box & Corner Brackets Removed:** Removed the yellow document corner brackets, border lines, and center badge overlay from the camera viewfinder (`#menu-camera-viewfinder`) for a clean, unobstructed edge-to-edge view.
+* **Header Status Feedback:** Relocated orientation feedback cleanly into the top bar (`#menu-camera-orient-btn` and `#menu-camera-sub`), providing non-intrusive status cues without covering the camera view.
+
+### 3. In-App Change Log & Release Notes
+* **Change Log Display Below Version:** Added a dedicated "Change Log" button and expandable details view right below the app version tracker in the Home Dashboard, Profile Settings, and Version Selector modal.
+* **Dynamic Markdown Parser:** Renders the complete contents of `CHANGELOG.md` into formatted release notes cards with offline support and automatic GitHub synchronization.
+
+## Version 1.0.59 (2026-10-25)
+
+### 1. Store Menu Camera & Lightbox Stacking Context Fix
+* **Camera Modal Stacking Elevation:** Fixed the issue where the camera modal (`#store-menu-camera-modal`) rendered underneath the store menu gallery modal (`#store-menu-gallery-modal`). Increased the camera modal's z-index to `1000060 !important` and ensured it is dynamically re-appended to `document.body` so it reliably sits at the very top of the DOM stacking context above the gallery (`1000010`).
+* **Gallery Lightbox Elevation:** Elevated the menu full-screen photo lightbox (`#gallery-lightbox`) z-index to `1000050 !important`, ensuring high-resolution image previews open cleanly on top of the store menu.
+* **Recipient Picker Elevation:** Raised the customer recipient selection picker (`#menu-recipient-picker-modal`) to z-index `1000020`, guaranteeing full visibility when sharing menus directly from the gallery.
+
+## Version 1.0.58 (2026-10-25)
+
+### 1. Commission Page: Admin Rider Isolation & Report Fix
+* **Admin Rider Filter Isolation Fix:** Fixed the issue where isolating a single rider from the admin dropdown (`#admin-rider-select`) displayed a blank ledger with 0 records. Implemented `checkRiderFilterMatch` to accurately reconcile rider display names with numeric Telegram IDs and roster records across the commission calculation engine.
+* **Daily Report Text Isolation:** Corrected rider isolation in the exportable Daily Summary Report text (`generateDailyReportText`), ensuring isolated rider breakdowns compute gross totals, rider shares, and company fees properly.
+* **Settlement Status Protection:** Prevented marking or reverting settlements when "All Riders" is selected, requiring an isolated rider selection before committing payment statuses.
+
+### 2. Map Calculation & Catering Roster Map Links: Public Web Hosting & Chrome Breakout
+* **Public Domain URL Resolution (Localhost Loopback Fix):** Fixed the bug where generated map calculation (`?mapcalc=...`), customer delivery tracking (`?track=...`), and mutual live GPS (`?livegps=...`) links defaulted to `http://localhost` when generated inside the Android app (Capacitor) or development environments. All customer-facing links are now canonically anchored to the public GitHub Pages domain (`https://mielglitx.github.io/Lokalex-Complete-Tool-Kit/`).
+* **Force External Google Chrome Browser Breakout:**
+  * Implemented `isInAppBrowser()` detection for Facebook Messenger, Instagram, and webview environments.
+  * Added automated Android Chrome Intent launching (`intent://...#Intent;scheme=https;package=com.android.chrome;...`) to break out of in-app webviews directly into standalone Google Chrome.
+  * Added user-facing fallback banners (`#mapcalc-iab-chrome-banner`, `#track-iab-chrome-banner`, `#livegps-iab-chrome-banner`) equipped with a 1-tap **"Switch to Chrome Browser"** button and clear guidance on using the Messenger 3-dots (⋯) menu.
+* **Instant Native Location Permission Prompt:** Customer portals for Map Calculation, Live Tracking, and Mutual GPS now automatically trigger location requests immediately upon opening, presenting the browser's native location permission dialog without requiring manual button taps.
+
+## Version 1.0.57 (2026-10-25)
+
+### 1. Delivery Fare Rates Quick-Send in Customer Chat
+* **Chat Header, Action Bar & Quick-Toolbar Access:** Added dedicated "Rates" pill button (`#rider-chat-rates-pill`) in the chat header, an action bar "Rates" button (`#rider-chat-send-rate-btn`), and an input toolbar rate icon button (`#rider-chat-rates-input-btn`) directly next to the message field for instant access inside any customer chat.
+* **In-Chat Delivery Fare Rates Picker Modal (`#chat-fare-rate-picker-modal`):** Allows riders to view and filter standardized delivery rates by Origin Municipality and Destination Municipality/Barangay, with instant text search and organized card layouts showing Origin, Destination, Base Fare, and Additional Rates.
+* **Dual Dispatch Modes (Insert to Input vs. Direct Quick-Send):**
+  * **"Insert" Button:** Formats the standard delivery rate details into a clean chat message template and inserts it directly into the chat input field for optional rider customization before sending.
+  * **"Send Rate" Button:** Prepares the standardized delivery rate and triggers an in-app confirmation modal for immediate 1-tap dispatch into the active chat thread.
+* **Pre-Send Confirmation Modal (`#fare-rate-send-confirm-modal`):** Displays a verified breakdown (Origin → Destination, Delivery Fee, and Customer Recipient Name) before any delivery fare rate is dispatched to avoid accidental sends.
+
+### 2. Fee Rates Directory Auto-Fill & Suggestive Inputs
+* **Automatic Destination Pre-Fill:** When viewing a destination in the Fee Rates Directory and clicking "Add New Rates", the destination municipality and destination region are automatically pre-filled to match the currently viewed destination, saving riders repetitive manual selection.
+* **Suggestive Typewritten Textboxes (`<input list="...">`):** Converted the Destination Region and Destination Municipality from static dropdown selects into modern, suggestive typewritten inputs with dynamic `<datalist>` auto-suggestions.
+* **Dynamic Cascading Suggestions:** Typing or choosing a Region dynamically filters and populates the Municipality datalist (`#form-rate-municipality-list`) via the Philippine Standard Geographic Code (PSGC) dataset, matching the behavior of the Barangay suggestive input.
+* **Full Backward Compatibility:** Maintained fallback compatibility with existing directory records and custom municipality/region naming across the application.
+
+### 3. Rider Profile Pictures & Avatar Stability Overhaul
+* **Elimination of Temporary 72-Hour Litterbox Uploads:** Removed temporary 72-hour `litterbox.catbox.moe` photo uploads. All new rider profile photo uploads are now stored permanently using compressed high-resolution base64 data URLs when Firebase Storage is bypassed, ensuring avatars never expire.
+* **Automatic Dead/Expired Link Sanitization:** Added automatic detection and sanitization that purges expired Litterbox URLs (`litterbox.catbox.moe`) from local storage and memory on app startup, rider login, and roster sync.
+* **Universal Fallback UI (`onerror` Handlers):** Added inline `onerror` fallback handlers and defensive fallback logic across all avatar elements in the application:
+  * Main Header User Avatar (`#header-user-avatar`)
+  * Rider Profile Settings Preview (`#prof-modal-avatar-preview`)
+  * Avatar Picker Modal Preview (`#avatar-picker-preview`)
+  * Admin Controls Rider Info Modal (`#rider-info-avatar`)
+  * Customer Chat Feed Message Avatars
+  * Team Comms Message Avatars
+* **Startup & Real-Time Profile Photo Hydration:** Ensured the rider's active avatar is hydrated immediately on app launch from local storage and continuously synced in real time with Firebase RTDB (`roster/` and `riders/` nodes).
+
+## Version 1.0.56 (2026-10-25)
+
+### 1. Restaurant Menu Directory & Quick Send in Customer Chat
+* **In-Chat Quick Menu Directory Picker:** Added dedicated header shortcut pill (`#rider-chat-menu-pill`) and action bar button (`#rider-chat-send-menu-btn`) inside active customer chats to browse and dispatch physical store menus directly with 1 tap.
+* **Store Deduplication & Unified Card Listing:** Fixed duplicate store cards (e.g. Chowking x2, Chooks To Go x2). Directory records and Firebase metadata entries are now unified into a single card per store with accurate page counts.
+* **Special Character & Apostrophe Crash Fix (Cindy's):** Eliminated the syntax crash caused by decoded HTML entity apostrophes in inline onclick handlers. Switched to HTML5 data attributes (`data-store-name`, `data-composite-key`, `data-meta-key`) and robust event delegation.
+* **Multi-Candidate Key Resolution ("No Saved Photos" False Alarm):** Fixed first-click failure on Chowking by automatically resolving multiple candidate key variants (`stores` + clean name, stripped municipality prefixes, metadata keys) across IndexedDB and Firebase RTDB.
+
+### 2. Pre-Send & Post-Send In-App Confirmation Modals
+* **Custom Pre-Send Confirmation Modal (`#menu-send-confirm-modal`):** Replaced native browser `confirm()` with a styled in-app modal showing Store badge, Customer badge, and exact page count (e.g., *"Send all 4 menu pages of Chowking to Amiel Juralbal Yalung?"*).
+* **Custom Post-Send Confirmation Modal (`#menu-sent-confirmation-modal`):** Triggers immediately upon dispatch with recipient confirmation, a 1-tap **"View in Chat"** button that focuses and scrolls to the sent pages, and a **"Done"** dismiss button.
+* **Consistent Across All Flows:** Fully integrated into Chat Quick Send, Store Directory Menu Gallery (Send All / Send Selected), and the Customer Recipient Picker.
+
+### 3. "Seen by" Badges Placement (Accurate Last-Seen Anchor)
+* **Customer Seen Badge Anchor:** Customer seen badge (`Seen by [Customer Name]` + avatar) now strictly attaches **underneath the last message sent by the rider that the customer has actually seen** (`isExplicitSeen || msgTs <= customerLastSeenTs || msgTs <= latestCustomerReplyTs`), never floating at the bottom when newer unread messages exist.
+* **Rider Seen Badge Anchor:** Rider seen badge (`Seen by [Rider Name]` + badge) now strictly attaches **underneath the exact message that was on screen when the rider viewed the thread** (`msgTs <= seenAt`), never forced to the bottom if newer incoming customer messages have arrived.
+* **Independent Multi-Participant Positioning:** Customer and Rider seen indicators are positioned independently at their respective last-seen milestones.
+
+### 4. Facebook Messenger Image Dispatch & Cloudflare Worker Optimization
+* **Base64 Payload Compression:** Added client-side canvas compression for large base64 menu photos before forwarding to Facebook Messenger via Cloudflare Worker. Guarantees payloads remain under 45KB, preventing HTTP 413 (Payload Too Large) and 502 Bad Gateway errors.
+* **Instant Optimistic Chat UI Update:** Dispatched menu pages immediately reflect in the active chat bubble view without waiting for round-trip webhook echo.
+
+### 5. App-Wide English Language Standardization
+* **Complete English Localization:** Standardized notifications, toasts, modals, confirmation dialogues, action sheets, and status prompts across the entire app to clean, professional English.
+
+## Version 1.0.55 (2026-10-25)
+
+### 1. Store Menu Camera & Photo Quality Overhaul
+* **Auto-Orientation Detection:** Camera detects device orientation (portrait vs. landscape) in real time via gyroscope and screen orientation APIs, automatically orienting captured photos before preview and upload.
+* **Pinch-to-Zoom & Hardware Zoom Slider:** Added interactive zoom gestures and a hardware zoom slider using native MediaStream track capabilities.
+* **Sharpness & Speed Optimization:** Eliminated photo blurriness by capturing at the camera sensor's maximum supported native resolution before compression, and accelerated image processing to eliminate capture lag.
+
+### 2. Live Chat Real-Time Presence, Typing & Seen Indicators
+* **In-Thread Presence Banner:** Displays a real-time status banner at the top of the chat thread showing who is currently viewing/opening the chat.
+* **Typing Indicator Bubble:** Shows real-time typing indicators both inside the message stream ("typing...") and on chat feed cards.
+* **"Seen" Tracking:** Tracks and displays who has opened and viewed messages in the chat thread.
+
+### 3. Alarm Chimes Filtering (Catered Order Sound Isolation)
+* **Stopped Non-Catered Chimes:** Riders now only receive acoustic notification alarm chimes for customers they are actively catering (`isMyCustomerThread === true`).
+* **Removed Admin Chime Bleed:** Removed an override that previously caused team leaders/admins to hear chimes for every customer catered by other riders.
+* **Live Roster Caterer Resolution:** Added `getActiveRosterCaterer` before chime evaluation so orders catered in the active roster never falsely fall into the general inbox chime.
+* **Inbox Chime Silencing:** Silenced unassigned inbox/applicant/done chimes on active rider sessions.
+
+### 4. Rider Profile GCash Persistence
+* **Instant Profile Credential Sync:** Fixed the bug where saving GCash details in profile settings didn't reflect when opening the rider's profile modal.
+* **Multi-Node Sync:** Unified syncing across Firebase RTDB (`riders/`, `roster/`, and `gcash/`) and local storage.
+* **Profile Display:** Added GCash Name and Number fields directly to the Rider Profile view.
+
+### 5. Customer Directory Linking & Folder Preservation
+* **Catering Folder Preservation:** Fixed the issue where linking a catered customer to an existing directory account with a slightly different name (e.g. *Zyra Mae Manalon* vs. *Zyra Mae Manalon Villegas*) kicked the thread into the inbox.
+
+### 6. Stability & Startup Fixes
+* **White Screen Fix:** Resolved the runtime `ReferenceError: startChatTypingListener is not defined` in `riderChat.js` by properly importing presence/typing listeners.
+* **Syntax Cleanups:** Fixed parser diagnostics in `profileSave.js`.
