@@ -1,12 +1,11 @@
 # Lokalex Kotlin Native App Update Repository
 Repository for Base APK installer releases and release changelog for Lokalex Kotlin Native.
 
-- **Version**: 2.1.7
-- **Native Version**: 2.1.7 (versionCode 217)
-- **APK Size**: 2381674 bytes (~2.27 MB)
-- **SHA-256**: `63989d89391fe2ad8e65ac7b4df5970b783dffe59c20394ce3aedd348879094b`
+- **Version**: 2.1.8
+- **Native Version**: 2.1.8 (versionCode 218)
+- **APK Size**: 2382610 bytes (~2.27 MB)
+- **SHA-256**: `8d41ef271694763ba00d9c8240b1c17d51f1aae9e3c946fb4bec42b6b6f64a88`
 - **Update Mode**: Pure Base APK Installer Only (`isApkOnly: true`, `forceApk: true`)
 - **Latest Release Highlights**:
-  - **Gallery Multi-Selection Upload**: Enables `Intent.EXTRA_ALLOW_MULTIPLE` in `MainActivity.onShowFileChooser()` when `MODE_OPEN_MULTIPLE` is used, normalizes comma-separated `acceptTypes`, and adds multi-image upload support to Team Chat.
-  - **Store Menu Data-Loss Guard**: Checks `.select("data")` errors across `set`, `update`, `remove`, multi-path `he()`, and chat metadata writers so transient read failures cannot overwrite rows with `{}`.
-  - **Menu Metadata & Catalog Recovery**: Merges `smg__meta_index` and `directory.storeMenuMeta` in `fe()`, syncs metadata on page deletes, and restores broken Jollibee (`smg__storesjollibee`), Wings City, Cafe Rafaelo, Potato Corner, and menu index entries.
+  - **Receipt Wizard & Chat Back-Button Fix**: Prevents Android Back press from jumping back to `#view-wizard` or `#view-receipt-final` after sending a receipt directly to a customer or marking a customer Done.
+  - **Modern UI & WebView History Guard**: Recognizes visible `#modern-ui-workspace` as `view-home` in `popstate` and back navigation, clears stale WebView back history via `NativePermissionsBridge.clearWebViewHistory()`, and routes hardware Back through `MainActivity.setupBackHandler()` + `window.handleNativeBackPress()`.

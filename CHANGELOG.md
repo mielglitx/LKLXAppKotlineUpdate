@@ -1,5 +1,11 @@
 # Lokalex App Release Notes
 
+## Version 2.1.8 (2026-11-12)
+
+### 1. Receipt Wizard & Chat Back-Button Navigation Fix
+* **Fixed Wizard Re-Entry on Back Press:** Resolved an issue where pressing the Back button on Chat after sending a receipt directly to a customer—or after marking a customer Done—would jump back into `#view-wizard` / `#view-receipt-final` instead of staying on Chat/Home.
+* **Modern UI & Android WebView Back Stack Guard:** Updated `_lokalexActiveViewId()` and `popstate` so Modern UI (`#modern-ui-workspace`) is properly recognized as `view-home`, cleared stale wizard history on receipt completion (`ZF()` / `completeReceiptDone`) and Done completion (`Y_()`) via `NativePermissionsBridge.clearWebViewHistory()`, and wired `MainActivity.setupBackHandler()` through `window.handleNativeBackPress()`.
+
 ## Version 2.1.7 (2026-11-12)
 
 ### 1. Gallery Multi-Selection Upload Fix
