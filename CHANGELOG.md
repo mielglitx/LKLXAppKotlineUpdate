@@ -1,5 +1,17 @@
 # Lokalex App Release Notes
 
+## Version 2.1.5 (2026-11-12)
+
+### 1. Customer Done Status Revert Fix
+* **Outbox Pruning & Write-Order Guard:** Marking a customer Done and returning to Available now clears queued roster mutations immediately after cloud confirmation and guards local roster state against stale in-flight snapshots so background syncs no longer flip the rider or chat card back to Catering.
+* **Single Canonical Metadata Write & Done Lock:** Removed duplicate dual-path writes (`customerChats/*/metadata` vs `customerChatMeta/*`) and phantom ID variants during Done completion, awaited cloud metadata updates cleanly, and prevented stale roster entries from pulling Done chats back into Catering.
+
+### 2. Mobile Data Usage Fix (System & Auth Configuration)
+* **Eliminated Resync & Reconnect Storms:** Fixed background/foreground resume handlers, native `onResume`, and the sync watchdog from calling redundant `goOffline()/goOnline()` and full non-volatile table re-fetches (`adminSettings`, `teamChat/general`, `logins`, `settings/*`) every few seconds.
+* **Targeted Realtime CDC Filters & Exponential Backoff:** Added row/room PostgREST CDC filters (`room_id=eq.*`, `id=eq.*`) so non-chat table listeners only receive matching events, and replaced fixed 3s channel reconnect loops with exponential backoff (5s–60s) gated on online/foreground state.
+* **Stopped 118 KB Error-Log Sync Loop & Duplicate Listeners:** Fixed the broken `ResizeObserver`/network filter and added cooldowns in error reporting so transient offline errors no longer upload/re-broadcast `adminSettings/appErrorLogs`, removed eager admin error log realtime streaming, made `_F()`, `aO()`, and `lb()` idempotent, and made Team Chat general messages load lazily when opened.
+* **Accurate Data Usage Attribution:** Classified `team_chat`, `orders`, `catered_history`, `customers`, `swap_requests`, and `map_calculations` accurately and excluded local WebView/blob fetches.
+
 ## Version 2.1.4 (2026-11-12)
 
 ### 1. Base APK Updater Android Detection Fix
