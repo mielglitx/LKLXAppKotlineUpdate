@@ -1,5 +1,13 @@
 # Lokalex App Release Notes
 
+## Version 2.1.6 (2026-11-12)
+
+### 1. Background, Screen-Off & Resume Sync Resilience
+* **Watchdog Delta Sync & Doze Recovery:** Fixed `REASON_WATCHDOG` skipping `syncDeltaNow()` in `LokalexForegroundService` and switched Doze alarm intervals automatically between 15 minutes (healthy WebSocket) and 3 minutes (disconnected/stale WebSocket).
+* **Server-Clock Delta Cursor:** Separated PostgreSQL `updated_at` (`serverUpdatedAtMs`) from phone `lastUpdated` clocks so ahead-of-time client clocks cannot stall delta chat catch-up.
+* **Guaranteed Resume UI Flush:** Preserved pending background `roster` and `customer_chat_meta` sync flags in `MainActivity.onResume()` and flushed missed updates into the WebView once timers resume.
+* **FCM Push Payload Unwrapping (`send-fcm-push`):** Updated `supabase/functions/send-fcm-push/index.ts` to unwrap `record.data` for `roster` updates and emit collapsed silent sync wakes for non-unread chat folder/cater updates.
+
 ## Version 2.1.5 (2026-11-12)
 
 ### 1. Customer Done Status Revert Fix

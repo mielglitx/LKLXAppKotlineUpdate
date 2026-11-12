@@ -1,11 +1,12 @@
 # Lokalex Kotlin Native App Update Repository
 Repository for Base APK installer releases and release changelog for Lokalex Kotlin Native.
 
-- **Version**: 2.1.5
-- **Native Version**: 2.1.5 (versionCode 215)
-- **APK Size**: 2380406 bytes (~2.27 MB)
-- **SHA-256**: `1688ed192b3fec3315e27915ad7c417af53a41e3749cd082499646a05e107164`
+- **Version**: 2.1.6
+- **Native Version**: 2.1.6 (versionCode 216)
+- **APK Size**: 2380834 bytes (~2.27 MB)
+- **SHA-256**: `44e4cc92d2f4e32e2846e6794a844dd8b4db01bae88921e24f704d7516e0e1a4`
 - **Update Mode**: Pure Base APK Installer Only (`isApkOnly: true`, `forceApk: true`)
 - **Latest Release Highlights**:
-  - **Customer Done Status Revert Fix**: Prunes flushed roster mutations from the offline outbox, guards local roster state against stale snapshots, deduplicates dual-path metadata writes (`customerChatMeta/*`), awaits Done metadata confirmation, and blocks stale roster entries from pulling Done chats back into Catering.
-  - **Mobile Data Usage Fix (System & Auth Configuration)**: Stops redundant resume/watchdog `goOffline()/goOnline()` reconnects and full non-volatile table re-syncs, adds row/room Postgres CDC filters (`room_id=eq.*`, `id=eq.*`) and exponential reconnect backoff (5s–60s), breaks the 118 KB `adminSettings/appErrorLogs` retry/broadcast loop, makes listener initialization idempotent with lazy Team Chat loading, and fixes data-usage bucket attribution.
+  - **Watchdog Delta Sync & Doze Recovery**: Fixes `REASON_WATCHDOG` skipping `syncDeltaNow()` and adapts Doze watchdog alarms between 15 minutes (connected) and 3 minutes (disconnected/stale WebSocket).
+  - **Server-Clock Delta Cursor & Resume Catch-Up**: Uses PostgreSQL `updated_at` (`serverUpdatedAtMs`) to avoid client clock skew stalling deltas, and flushes pending `roster` / `customer_chat_meta` background events into the WebView on `onResume()`.
+  - **FCM Push `roster.data` Fix**: Unwraps `record.data` for `roster` updates in `supabase/functions/send-fcm-push/index.ts` (requires Edge Function deploy) and sends collapsed silent sync wakes for non-unread chat updates.
