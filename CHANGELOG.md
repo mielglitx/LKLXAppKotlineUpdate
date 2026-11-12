@@ -1,5 +1,15 @@
 # Lokalex App Release Notes
 
+## Version 2.1.7 (2026-11-12)
+
+### 1. Gallery Multi-Selection Upload Fix
+* **Android WebView Multi-Select Intent:** Updated `MainActivity.onShowFileChooser()` to pass `Intent.EXTRA_ALLOW_MULTIPLE = true` when `FileChooserParams.MODE_OPEN_MULTIPLE` is requested and normalized comma-separated `acceptTypes`, enabling multi-photo selection in Store Menu Gallery and Chat Gallery.
+* **Team Chat Multi-Photo Upload:** Added `multiple` on `#team-chat-file-input` and updated `Vy()` to compress and send all selected images cleanly.
+
+### 2. Store Menu Data-Loss Prevention & Live Catalog Recovery
+* **Prevented Empty-Read Row Wipes:** Added `.select("data")` error checks across `set`, `update`, `remove`, multi-path `he()`, and chat metadata writers so transient read errors/timeouts abort instead of upserting `{}` and wiping store menu `imageUrl`s during `metaAttachmentId` write-backs.
+* **Metadata Sync & Restored Menus:** Updated `fe()` to merge `smg__meta_index` and `directory.storeMenuMeta`, updated `gj()` to sync `storeMenuMeta` on page deletion, restored Jollibee's 6 menu pages (`smg__storesjollibee`), cleaned expired `404` links in `smg__wingscity` / `smg__yuvalfoodpark`, and resynced store menu counts/names.
+
 ## Version 2.1.6 (2026-11-12)
 
 ### 1. Background, Screen-Off & Resume Sync Resilience

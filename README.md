@@ -1,12 +1,12 @@
 # Lokalex Kotlin Native App Update Repository
 Repository for Base APK installer releases and release changelog for Lokalex Kotlin Native.
 
-- **Version**: 2.1.6
-- **Native Version**: 2.1.6 (versionCode 216)
-- **APK Size**: 2380834 bytes (~2.27 MB)
-- **SHA-256**: `44e4cc92d2f4e32e2846e6794a844dd8b4db01bae88921e24f704d7516e0e1a4`
+- **Version**: 2.1.7
+- **Native Version**: 2.1.7 (versionCode 217)
+- **APK Size**: 2381674 bytes (~2.27 MB)
+- **SHA-256**: `63989d89391fe2ad8e65ac7b4df5970b783dffe59c20394ce3aedd348879094b`
 - **Update Mode**: Pure Base APK Installer Only (`isApkOnly: true`, `forceApk: true`)
 - **Latest Release Highlights**:
-  - **Watchdog Delta Sync & Doze Recovery**: Fixes `REASON_WATCHDOG` skipping `syncDeltaNow()` and adapts Doze watchdog alarms between 15 minutes (connected) and 3 minutes (disconnected/stale WebSocket).
-  - **Server-Clock Delta Cursor & Resume Catch-Up**: Uses PostgreSQL `updated_at` (`serverUpdatedAtMs`) to avoid client clock skew stalling deltas, and flushes pending `roster` / `customer_chat_meta` background events into the WebView on `onResume()`.
-  - **FCM Push `roster.data` Fix**: Unwraps `record.data` for `roster` updates in `supabase/functions/send-fcm-push/index.ts` (requires Edge Function deploy) and sends collapsed silent sync wakes for non-unread chat updates.
+  - **Gallery Multi-Selection Upload**: Enables `Intent.EXTRA_ALLOW_MULTIPLE` in `MainActivity.onShowFileChooser()` when `MODE_OPEN_MULTIPLE` is used, normalizes comma-separated `acceptTypes`, and adds multi-image upload support to Team Chat.
+  - **Store Menu Data-Loss Guard**: Checks `.select("data")` errors across `set`, `update`, `remove`, multi-path `he()`, and chat metadata writers so transient read failures cannot overwrite rows with `{}`.
+  - **Menu Metadata & Catalog Recovery**: Merges `smg__meta_index` and `directory.storeMenuMeta` in `fe()`, syncs metadata on page deletes, and restores broken Jollibee (`smg__storesjollibee`), Wings City, Cafe Rafaelo, Potato Corner, and menu index entries.
