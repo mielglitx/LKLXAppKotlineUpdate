@@ -1,15 +1,13 @@
 # Lokalex Kotlin Native App Update Repository
 Repository for Base APK installer releases and release changelog for Lokalex Kotlin Native.
 
-- **Version**: 2.5.5
-- **Native Version**: 2.5.5 (versionCode 255)
-- **APK Size**: 47337216 bytes (~45.14 MB)
-- **SHA-256**: `976785901375069c8e83927394d64d8f67f4d391b338ed2b7ba8996bf4953bc7`
+- **Version**: 2.5.7
+- **Native Version**: 2.5.7 (versionCode 257)
+- **APK Size**: 47355260 bytes (~45.16 MB)
+- **SHA-256**: `eeb3c70bbbc668e4fd61009b8627b3b0eb215d14924e4713890f7fedd7609277`
 - **Update Mode**: Pure Base APK Installer Only (`isApkOnly: true`, `forceApk: true`)
 - **Latest Release Highlights**:
-  - **Android "Install Unknown Apps" (`REQUEST_INSTALL_PACKAGES`) Gate & Auto-Resume**: Pre-install permission check redirects to Settings if unknown app installs are disabled; auto-resumes APK installation immediately upon returning from Settings without re-downloading.
-  - **Native OpenStreetMap (osmdroid) Interactive Map Picker**: Embedded native OSM map picker with pin drop, GPS re-center, zoom controls, and multi-provider coordinate parser, eliminating Google Maps SDK dependencies and API keys.
-  - **Inset-Safe Height-Bounded Modals & Pinned Action Bars**: Constrained dialog surfaces (`heightIn(max = 88% screen height)`) with pinned bottom action bars across Directory, Customer, and Address modals, eliminating button clipping on gesture navigation bars.
-  - **Authoritative Commission Sync & Server-Verified Deletion**: Server scope replacement, tombstone filtering for voided records, and multi-tier Supabase cascade deletion.
-  - **IME Soft Keyboard Auto-Scroll & Non-Blocking Media Dispatch**: Auto-scrolls composer and message list above soft keyboard; dispatches image captures and receipts asynchronously in background.
-  - **Bi-Directional Message Reactions & Direct Facebook Page Sync**: Robust nested reaction parsing, reaction cache invalidation, and Cloudflare Worker sync relay.
+  - **Outbound Sending Pipeline Fixes (Text, Gallery, Camera & Receipts)**: Normalized Worker `recipientId` (raw PSID) vs Supabase `room_id` (`fb_<psid>`), attached `apiId` and explicit `Content-Type: application/json`, sanitized `replyToMid`, synchronously cached picked/captured/receipt media into `cacheDir/outbound_media/` before dismissing modals, and added `CoroutineExceptionHandler` + `AppErrorTracker` + Toast error surfacing so failures are never silent.
+  - **Single-Image Bubble Deduplication**: Deduplicated image URLs by base path & Facebook CDN keys and cleanly replaced optimistic local/Supabase URLs on confirmed server/echo reconciliation instead of concatenating duplicates.
+  - **Rider Sender-Attribution Protection**: Preserved rider names (`sender = riderName`, `isFromPage = false`) across `send-reply`, SQLite cache, sync, and UI reconciliation so outbound rider messages never revert to `[Page]` / `Page Admin`.
+  - **Insta-Replies Cleanup**: Removed hardcoded built-in templates (`Cater Greeting`, `Closing Message`, `On the way`, `Nandito na`, `Papunta na`) so only saved custom Supabase replies appear, all with Edit and Delete actions.
