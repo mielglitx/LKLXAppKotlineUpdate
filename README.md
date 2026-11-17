@@ -1,13 +1,12 @@
 # Lokalex Kotlin Native App Update Repository
 Repository for Base APK installer releases and release changelog for Lokalex Kotlin Native.
 
-- **Version**: 2.5.7
-- **Native Version**: 2.5.7 (versionCode 257)
-- **APK Size**: 47355260 bytes (~45.16 MB)
-- **SHA-256**: `eeb3c70bbbc668e4fd61009b8627b3b0eb215d14924e4713890f7fedd7609277`
+- **Version**: 2.5.8
+- **Native Version**: 2.5.8 (versionCode 258)
+- **APK Size**: 47355268 bytes (~45.16 MB)
+- **SHA-256**: `0ff4a7eb2ef0efae70c044739c40d6d597aaafebad86a135729b1fa8320f766c`
 - **Update Mode**: Pure Base APK Installer Only (`isApkOnly: true`, `forceApk: true`)
 - **Latest Release Highlights**:
-  - **Outbound Sending Pipeline Fixes (Text, Gallery, Camera & Receipts)**: Normalized Worker `recipientId` (raw PSID) vs Supabase `room_id` (`fb_<psid>`), attached `apiId` and explicit `Content-Type: application/json`, sanitized `replyToMid`, synchronously cached picked/captured/receipt media into `cacheDir/outbound_media/` before dismissing modals, and added `CoroutineExceptionHandler` + `AppErrorTracker` + Toast error surfacing so failures are never silent.
-  - **Single-Image Bubble Deduplication**: Deduplicated image URLs by base path & Facebook CDN keys and cleanly replaced optimistic local/Supabase URLs on confirmed server/echo reconciliation instead of concatenating duplicates.
-  - **Rider Sender-Attribution Protection**: Preserved rider names (`sender = riderName`, `isFromPage = false`) across `send-reply`, SQLite cache, sync, and UI reconciliation so outbound rider messages never revert to `[Page]` / `Page Admin`.
-  - **Insta-Replies Cleanup**: Removed hardcoded built-in templates (`Cater Greeting`, `Closing Message`, `On the way`, `Nandito na`, `Papunta na`) so only saved custom Supabase replies appear, all with Edit and Delete actions.
+  - **Fixed Active Chat Threads Jumping Back to Done**: Explicitly clears all completion fields (`completedAt`, `completedBy`, `completedByRiderId`, `completedByRiderName`, `lastMarkedDoneAt`, `is_done`, `isDone`) across both `customer_chat_meta` and `customer_chats` (`${custId}_metadata`) on every active/reopen transition (`Undone`, `Cater`, `Inbox`, `Scheduled`, `Applicant`, `Stores`, customer reply, or rider reply).
+  - **Folder-Resolution Precedence & Grace-Window Hardening**: Enforces explicit non-done folder precedence over leftover `completedAt` or legacy `category = "Done"`, restricts local done-guard coercion to a 15-second post-Done grace window, fixes `ChatFeedScreen` local state traps so reopened threads update immediately, and resolves duplicate `<psid>` vs `fb_<psid>` alias rows in favor of newer active updates.
+  - **Outbound Sending Pipeline & Media Reliability**: Preserves active `inbox`/`catering` state on outbound replies, normalizes Worker `recipientId` vs `fb_<psid>`, synchronously caches outbound media to `cacheDir/outbound_media/`, deduplicates single-image bubbles, and preserves rider sender attribution over `[Page]` echoes.
