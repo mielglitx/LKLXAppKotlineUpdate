@@ -1,13 +1,12 @@
 # Lokalex Kotlin Native App Update Repository
 Repository for Base APK installer releases and release changelog for Lokalex Kotlin Native.
 
-- **Version**: 2.4.8
-- **Native Version**: 2.4.8 (versionCode 248)
+- **Version**: 2.4.9
+- **Native Version**: 2.4.9 (versionCode 249)
 - **APK Size**: 47241356 bytes (~45.05 MB)
-- **SHA-256**: `34ea72320297de6dbbd275d25d67135001e5cd38daeee73a1d3ec6520634da17`
+- **SHA-256**: `7bef26830297f03de9d218c4f391d5ae5702d401856aed8c093126002af1c783`
 - **Update Mode**: Pure Base APK Installer Only (`isApkOnly: true`, `forceApk: true`)
 - **Latest Release Highlights**:
-  - **Ungated Done Flow**: Removed the receipt verification gate from customer Done buttons across Rotations and Chat menus so orders can be completed immediately.
-  - **Strict Receipt Lock on Void & Cancel with Admin/TL Override**: Prevents regular riders from voiding or cancelling orders once a receipt has been created, while allowing Admins and permitted Team Leaders to override and void the receipt and commission records.
-  - **Instant Chat Done Optimistic Transition & 15s Grace Window**: Immediately updates thread metadata on frame 1 to Done, with a 15-second grace window to protect against background poll reversion, and auto-transitions the rider to Available when all orders are done.
-  - **Direct OkHttp Streaming APK Downloader**: Replaces DownloadManager with direct OkHttp streaming on Dispatchers.IO, writing directly to downloads, throttling progress updates to 150ms, and auto-launching FileProvider package installer at 100%.
+  - **Instant Chat Card Folder & Category Reactivity**: Resolved the issue where chat cards remained in active lists after status/folder changes (`Done`, `Cater`, `Undone`, `Followup` / `Scheduled`, `Applicant`, `Cancel`) until manual tab switches. Re-keyed `filteredChats` on Compose `mutableStateMapOf` snapshot state (`chatMetaMap`) and wired `updateChatMetaOptimistic` for instant frame-1 card relocation.
+  - **Stable Item Identity (`psid`)**: Added `val psid: String get() = customerId.ifBlank { id.removePrefix("fb_") }` in `ChatMeta.kt` and wired `items(displayChats, key = { it.psid.ifBlank { it.stableUniqueKey } })` in `ChatThreadListPane.kt` for smooth exit transitions.
+  - **Facebook Page Message Synchronization & Non-Text Attachment Fix**: Added global tail overlap polling (`fetchRecentGlobalMessages(limit = 80)` every 6s), preserved non-text and attachment-only messages (stickers, locations, media, links), auto-surfaced new and returning customers, and added 1-tap Force Message Update via Cloudflare Worker relay.
