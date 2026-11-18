@@ -1,12 +1,12 @@
 # Lokalex Kotlin Native App Update Repository
 Repository for Base APK installer releases and release changelog for Lokalex Kotlin Native.
 
-- **Version**: 2.5.8
-- **Native Version**: 2.5.8 (versionCode 258)
-- **APK Size**: 47355268 bytes (~45.16 MB)
-- **SHA-256**: `0ff4a7eb2ef0efae70c044739c40d6d597aaafebad86a135729b1fa8320f766c`
+- **Version**: 2.5.9
+- **Native Version**: 2.5.9 (versionCode 259)
+- **APK Size**: 47371680 bytes (~45.18 MB)
+- **SHA-256**: `5da1d7c07f781fefde76bf52755d763c9577fe27937a7331ed412b25f508716e`
 - **Update Mode**: Pure Base APK Installer Only (`isApkOnly: true`, `forceApk: true`)
 - **Latest Release Highlights**:
-  - **Fixed Active Chat Threads Jumping Back to Done**: Explicitly clears all completion fields (`completedAt`, `completedBy`, `completedByRiderId`, `completedByRiderName`, `lastMarkedDoneAt`, `is_done`, `isDone`) across both `customer_chat_meta` and `customer_chats` (`${custId}_metadata`) on every active/reopen transition (`Undone`, `Cater`, `Inbox`, `Scheduled`, `Applicant`, `Stores`, customer reply, or rider reply).
-  - **Folder-Resolution Precedence & Grace-Window Hardening**: Enforces explicit non-done folder precedence over leftover `completedAt` or legacy `category = "Done"`, restricts local done-guard coercion to a 15-second post-Done grace window, fixes `ChatFeedScreen` local state traps so reopened threads update immediately, and resolves duplicate `<psid>` vs `fb_<psid>` alias rows in favor of newer active updates.
-  - **Outbound Sending Pipeline & Media Reliability**: Preserves active `inbox`/`catering` state on outbound replies, normalizes Worker `recipientId` vs `fb_<psid>`, synchronously caches outbound media to `cacheDir/outbound_media/`, deduplicates single-image bubbles, and preserves rider sender attribution over `[Page]` echoes.
+  - **Fixed `Storage HTTP 400: Bucket not found (NoSuchBucket)` Across All Attachments**: Standardized primary Supabase Storage bucket `chat-media` with automatic fallback probing across `chat-media` → `receipts` → `uploads` → `media` and explicit per-type `Content-Type` headers across gallery images, camera photos, receipts, videos, voice notes, and documents.
+  - **Direct Worker Base64 Relay Fallback for Photos & Receipts**: When Supabase Storage buckets are unavailable, compresses photos/receipts to JPEG (max 1080px, quality 80) and sends `data:image/jpeg;base64,...` directly to Cloudflare Worker `/api/send-reply` for multipart binary delivery to Meta Graph API.
+  - **Unified Tap-to-Retry Across All Media Types**: Retains cached local `file://` files in `cacheDir/outbound_media/` on failure and cleanly transitions `"failed"` → `"sending"` → `"sent"` on retry across photos, receipts, videos, voice notes, and documents.
