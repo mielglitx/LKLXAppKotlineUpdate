@@ -1,12 +1,12 @@
 # Lokalex Kotlin Native App Update Repository
 Repository for Base APK installer releases and release changelog for Lokalex Kotlin Native.
 
-- **Version**: 2.5.9
-- **Native Version**: 2.5.9 (versionCode 259)
-- **APK Size**: 47371680 bytes (~45.18 MB)
-- **SHA-256**: `5da1d7c07f781fefde76bf52755d763c9577fe27937a7331ed412b25f508716e`
+- **Version**: 2.6.0
+- **Native Version**: 2.6.0 (versionCode 260)
+- **APK Size**: 47371688 bytes (~45.18 MB)
+- **SHA-256**: `841733e49c7b00881c6ec4a4b8abd56269a5cf2078ca238cc0a761a73f6f5a14`
 - **Update Mode**: Pure Base APK Installer Only (`isApkOnly: true`, `forceApk: true`)
 - **Latest Release Highlights**:
-  - **Fixed `Storage HTTP 400: Bucket not found (NoSuchBucket)` Across All Attachments**: Standardized primary Supabase Storage bucket `chat-media` with automatic fallback probing across `chat-media` → `receipts` → `uploads` → `media` and explicit per-type `Content-Type` headers across gallery images, camera photos, receipts, videos, voice notes, and documents.
-  - **Direct Worker Base64 Relay Fallback for Photos & Receipts**: When Supabase Storage buckets are unavailable, compresses photos/receipts to JPEG (max 1080px, quality 80) and sends `data:image/jpeg;base64,...` directly to Cloudflare Worker `/api/send-reply` for multipart binary delivery to Meta Graph API.
-  - **Unified Tap-to-Retry Across All Media Types**: Retains cached local `file://` files in `cacheDir/outbound_media/` on failure and cleanly transitions `"failed"` → `"sending"` → `"sent"` on retry across photos, receipts, videos, voice notes, and documents.
+  - **Rider-Scoped Cart Icon Visibility & Ownership Guard**: Renders the green Cart / Receipt Wizard icon strictly on customers catered by the current rider using ID-first ownership checks (`ChatMeta.isCateredByRider`) with exact normalized name fallback, completely hides the Cart icon on other riders' cards (displaying `"Catered by <Rider>"`), and guards Cart click handlers (`openCartForChatGuarded`) against opening or overwriting another rider's active customer cart.
+  - **Storage NoSuchBucket Fix & Worker Base64 Relay Fallback**: Unified `chat-media` bucket resolution with fallback probing (`chat-media` → `receipts` → `uploads` → `media`), direct compressed base64 JPEG Cloudflare Worker fallback for photos/receipts, and unified tap-to-retry across all attachment types.
+  - **Active Chat Done-Jump Fix**: Cleared all completion fields across `customer_chat_meta` and `customer_chats` metadata on active/reopen transitions and enforced explicit non-done folder precedence.
