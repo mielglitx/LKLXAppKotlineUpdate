@@ -1,5 +1,34 @@
 # Lokalex App Release Notes
 
+## Version 2.7.6 (2026-11-19)
+
+### 1. Elimination of Roster & Logins Bandwidth Drain
+* **Realtime WebSocket In-Memory Updates (`RosterAndShiftRepository.kt` & `LokalexForegroundService.kt`):**
+  * Handled `INSERT`, `UPDATE`, and `DELETE` events for `roster` and `logins` directly in-memory via `applyRealtimeRosterUpdate` and `applyRealtimeLoginUpdate` without triggering expensive full-table REST re-fetches.
+  * Persists updated states to disk snapshots (`filesDir/roster_cache.json` and `filesDir/logins_today_cache.json`) instantly.
+* **Strict Suppression of Background Polling (`LokalexRepository.kt` & `RosterAndShiftRepository.kt`):**
+  * Suppressed periodic roster polling ticks while the Phoenix Channels WebSocket is healthy (`if (!isWsActive) refreshRoster(...)`), cutting data usage to zero bytes during active WebSocket connections.
+  * Added PostgREST watermark delta sync for `roster` (`or=(data->>lastUpdated.gt.$max,data->>updatedAt.gt.$max)&select=id,data&limit=50`) returning 0 payload bytes when unchanged.
+* **Strict Manila Date Filtering for Logins (`RosterAndShiftRepository.kt`):**
+  * Filtered Supabase `logins` queries strictly to today's date in `Asia/Manila` (`select=id,data&or=(id.like.${todayDate}*,data->>date.eq.${todayDate})&limit=50`).
+  * Completely eliminated the un-filtered 50-row historical fallback query that previously downloaded 54.8 KB of past login records whenever today's logins returned empty.
+* **Targeted Shift Mutations & Zero-Byte Optimistic Updates (`RosterAndShiftRepository.kt`):**
+  * Narrowed `updateRosterFields` queries to targeted id and name parameters (`limit=5`) and removed the 100-row `getAllReq` fallback query.
+  * Implemented `applyLocalRosterUpdate` applying shift status changes in-memory with zero network overhead.
+  * Sanitized `Rider.photoUrl` to permanently strip `data:image` and `data:` base64 URIs.
+
+### 2. 100% Dynamic Starting Hubs & Main Hub Resolution
+* **Dynamic Hub & Branch Derivation (`DirectoryDialog.kt`, `CartReceiptScreen.kt`, `LokalexRepository.kt`):**
+  * Removed all hardcoded town and branch names. Starting hubs are built dynamically from loaded Supabase `rates` and `settings` records.
+  * Dynamically resolves the active Main Hub from Supabase `settings["mainHub"]`, displaying `(Main Hub)` for the primary hub and `<Hub> Branch` for all other branches.
+  * Added direct Admin quick-access gear pill opening `AdminMainHubDialog` to configure the main hub in Supabase with `Prefer: return=minimal`.
+
+### 3. Clickable + Type-to-Suggest Cascading Location Dropdowns
+* **Material 3 ExposedDropdownMenuBox (`DirectoryDialog.kt`):**
+  * Converted Starting Hub, Destination Region, Destination Municipality / City, and Destination Barangay / District into searchable dropdowns in Add/Edit Rate Entry modals.
+  * Equipped with trailing dropdown chevrons (`▼`) for 1-tap browsing and clear (`✕`) buttons.
+  * Instant type-to-suggest filtering backed 100% by live Supabase records with zero external PSA PSGC API calls and zero hardcoded town lists.
+
 ## Version 2.7.5 (2026-11-19)
 
 ### 1. Atomic Done Persistence & Elimination of Done -> Inbox Snapback
