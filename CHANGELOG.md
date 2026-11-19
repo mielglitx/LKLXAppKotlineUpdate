@@ -1,5 +1,26 @@
 # Lokalex App Release Notes
 
+## Version 2.7.2 (2026-11-19)
+
+### 1. Messenger Like (`👍`) Zero-Bandwidth Native Emoji Bubble & Compact Sticker Display
+* **Zero-Bandwidth Like Sticker Rendering (`ChatMeta.kt`, `ChatRepository.kt`, `ChatMessageLocalCache.kt`, `ChatRoomComponents.kt`):**
+  * Automatically detects Facebook Messenger quick Like/thumbs-up stickers (`sticker_id` `369239263222822`, `369239343222814`, `369239383222810` or CDN image URLs) and renders them directly as native text emojis (`👍` at `28.sp`).
+  * Completely bypasses Coil image fetching, HTTP wire transfers, SQLite thumbnail storage, and the `⬇ SHD` download button badge—saving mobile bandwidth every time a customer or rider taps the quick Like button.
+* **Compact Messenger Sticker Display (`ChatRoomComponents.kt` & `ChatConversationPane.kt`):**
+  * Renders non-Like Facebook stickers in a clean, compact `64.dp` tile with `ContentScale.Fit` and transparent background, eliminating full-width photo wrappers and disabling the SHD badge.
+  * Formats quoted and composer reply snippets as `"👍"` for Like stickers and `"🏷️ Sticker"` for other stickers.
+
+### 2. Centralized End-Chat Auto-Message Dispatch Across All Completion Paths
+* **Shared Farewell Pipeline (`ChatRepository.kt`, `RosterAndShiftRepository.kt`, `RotationsScreen.kt`, `StatusActionDialogs.kt`):**
+  * Centralized `sendEndChatAutoMessageIfEnabled` directly inside the atomic customer-completion flow (`markCustomerDone`).
+  * Seamlessly dispatches closing auto-messages regardless of whether completion is triggered from the chat header, `RotationsScreen`, or the `Available` status dock.
+  * Enforced session-scoped repeat-customer idempotency keys (`${canonicalCustId}_${sessionStartedAt}`) with 15-second in-flight locks to prevent message dropouts or duplicate spam on returning customers.
+
+### 3. Comprehensive Network Telemetry & Instrumented Data Tracking
+* **Instrumented Coil & Real-time Overhead Tracking (`DataUsageTracker.kt`, `DataUsageMonitorDialog.kt`):**
+  * Wrapped all Coil image loaders, avatar preloading, and Supabase Realtime WebSocket traffic into the primary `DataUsageTracker` network interceptor.
+  * Provided real-time endpoint breakdowns and eliminated uninstrumented "Realtime / Media Overhead" discrepancies in `DataUsageMonitorDialog`.
+
 ## Version 2.7.1 (2026-11-19)
 
 ### 1. Two-Row Non-Overlapping Chat Room Header Layout & Restored Customer Info Pill
