@@ -1,14 +1,12 @@
 # Lokalex Kotlin Native App Update Repository
 Repository for Base APK installer releases and release changelog for Lokalex Kotlin Native.
 
-- **Version**: 2.7.8
-- **Native Version**: 2.7.8 (versionCode 278)
+- **Version**: 2.7.9
+- **Native Version**: 2.7.9 (versionCode 279)
 - **APK Size**: 47679860 bytes (~45.47 MB)
-- **SHA-256**: `7afe4b6f8cb6993dd048f38a8cc7487452b82cbf8b721e49f772221e33784f7e`
+- **SHA-256**: `aa737c86f65ab77362ee733b1b7482f45114cf40001751468fc53007ab012c90`
 - **Update Mode**: Pure Base APK Installer Only (`isApkOnly: true`, `forceApk: true`)
 - **Latest Release Highlights**:
-  - **Elimination of 48x/min Phoenix Realtime Loop**: Deduplicated PostgreSQL change channels with `ConcurrentHashMap<String, Boolean>` topic tracking, cutting 48 joins/min (33.5 KB) down to 1 on connect (0 KB steady state).
-  - **Elimination of 39x/min Active Room REST Polling & -15s Rewind**: Removed negative rewind in `fetchMessagesDelta` and suppressed routine REST chat queries while Realtime WebSocket is connected, reducing traffic from 133.2 KB to < 1 KB.
-  - **In-Memory WebSocket Updates for Customer Chat Meta**: Dispatched WebSocket metadata updates directly into memory (`applyRealtimeChatMetaUpdate`) without launching redundant REST queries; normalized cursor timestamps across Postgres `+00:00` and Kotlin `Z` formats.
-  - **Bypassed 36.0 KB Background Catered Blob Fetch**: Gated heavy `/rest/v1/catered` downloads with smart hydration tracking, syncing receipts solely via lightweight delta watermark queries (< 2 KB).
-  - **Accurate Caller Stack-Trace Unwrapping**: Filtered minified OkHttp interceptor frames (`l.intercept:15`) in `captureCallerTag()` to accurately identify true business logic repository callers.
+  - **Fixed Infinite "Loading messages..." Spinner on Empty Conversations**: Tracked per-room load completion (`loadedRoomIds`) with deduplicated `fetchRoomMessages`, clean `"No messages in this conversation yet"` empty-state placeholder, and zero-flicker loading guard so background delta syncs never flash spinners over rendered messages.
+  - **Eliminated +1.21 MB Recomposition Room-Fetch Loop & Meta-Pulse Loops**: Keyed initial room hydration strictly on `canonicalCustomerId`, removed destructive preview-update full-room re-fetches, ignored null-message `customer_chats_meta` / `customer_chat_meta` pulses while WebSocket is connected, and short-circuited empty loaded rooms in `syncActiveThreadDeltaNow()`.
+  - **Microsecond Watermarks, Zero-Polling Meta & 5s WebSocket Cooldown**: Preserved raw PostgreSQL 6-digit microsecond `updated_at` watermarks, applied `+1ms` boundary offset to `timestamp=gt.` queries, wrapped `refreshChatsDelta`/`refreshChats` inside `if (!isWsActive)`, added a 5-second WebSocket reconnect cooldown, and filtered read-receipt-only `riderLastSeen` echoes.
