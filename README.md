@@ -1,12 +1,12 @@
 # Lokalex Kotlin Native App Update Repository
 Repository for Base APK installer releases and release changelog for Lokalex Kotlin Native.
 
-- **Version**: 2.7.9
-- **Native Version**: 2.7.9 (versionCode 279)
-- **APK Size**: 47679860 bytes (~45.47 MB)
-- **SHA-256**: `aa737c86f65ab77362ee733b1b7482f45114cf40001751468fc53007ab012c90`
+- **Version**: 2.8.0
+- **Native Version**: 2.8.0 (versionCode 280)
+- **APK Size**: 47679880 bytes (~45.47 MB)
+- **SHA-256**: `a58e1f2dbc94661269d21ef8b4dfdb3668f84629b9ee6773fac88623caa7b765`
 - **Update Mode**: Pure Base APK Installer Only (`isApkOnly: true`, `forceApk: true`)
 - **Latest Release Highlights**:
-  - **Fixed Infinite "Loading messages..." Spinner on Empty Conversations**: Tracked per-room load completion (`loadedRoomIds`) with deduplicated `fetchRoomMessages`, clean `"No messages in this conversation yet"` empty-state placeholder, and zero-flicker loading guard so background delta syncs never flash spinners over rendered messages.
-  - **Eliminated +1.21 MB Recomposition Room-Fetch Loop & Meta-Pulse Loops**: Keyed initial room hydration strictly on `canonicalCustomerId`, removed destructive preview-update full-room re-fetches, ignored null-message `customer_chats_meta` / `customer_chat_meta` pulses while WebSocket is connected, and short-circuited empty loaded rooms in `syncActiveThreadDeltaNow()`.
-  - **Microsecond Watermarks, Zero-Polling Meta & 5s WebSocket Cooldown**: Preserved raw PostgreSQL 6-digit microsecond `updated_at` watermarks, applied `+1ms` boundary offset to `timestamp=gt.` queries, wrapped `refreshChatsDelta`/`refreshChats` inside `if (!isWsActive)`, added a 5-second WebSocket reconnect cooldown, and filtered read-receipt-only `riderLastSeen` echoes.
+  - **Daily Asia/Manila Rollover & Date-Stamped Caches**: Centralized zero-network `ensureDailyRolloverIfNeeded` purges stale prior-day disk/memory caches on day rollover, stamps `cachedDate` inside `catered_today`, `receipts_today`, `roster_cache.json`, and `logins_today_cache.json`, and makes `todayDate` reactive across `MainScreen` and `CateredCustomersScreen`.
+  - **Accurate Daily Tab Counters (`Catered`, `Logins`, `Rotations`)**: Scoped `cateredCount` strictly to today's non-voided, non-penalty receipts; treated empty HTTP 2xx `/rest/v1/logins` responses as authoritative to reset unlogged prior-day riders; and updated `RiderLoginsScreen` / `MainScreen` to count strictly via `hasLoggedInToday`.
+  - **Missed-Cutoff Auto End Shift Recovery & Doze-Safe AlarmManager**: Replaced the 59-minute window with `lastDueCutoffMs` / `cutoffShiftDate` evaluation in `Asia/Manila` to catch missed overnight/Doze cutoffs (ending forgotten pre-cutoff `Catering` riders while protecting post-cutoff early logins), kept the 60s local timer at 0 bytes idle I/O, and added Doze-safe `ACTION_AUTO_END_SHIFT` `AlarmManager` scheduling.
