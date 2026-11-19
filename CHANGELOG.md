@@ -1,5 +1,24 @@
 # Lokalex App Release Notes
 
+## Version 2.7.5 (2026-11-19)
+
+### 1. Atomic Done Persistence & Elimination of Done -> Inbox Snapback
+* **Completion Order & In-Memory Done Persistence (`ChatRepository.kt` & `RosterAndShiftRepository.kt`):**
+  * Eliminated the race condition where marking a customer Done moved the thread to `Done` briefly and then snapped back to `Inbox` when the End-Chat auto-message fired.
+  * In `markCustomerDone`, immediately activates a 15-second `recentlyCompletedGuard[canonicalCustId]` and optimistically commits `folder = "done"`, `status = "completed"`, `cateredBy = ""`, and completion timestamps across all matching alias entries in `_chatList`—guaranteeing 0 UI flicker.
+  * Resets customer cart drafts and purges active catering entries from `ActiveCateringLocalCache` before dispatching the farewell message.
+
+### 2. Final Supabase Persistence Ordered After Farewell Dispatch
+* **Strict Post-Dispatch PATCH Ordering (`ChatRepository.kt`):**
+  * `sendEndChatAutoMessageIfEnabled(...)` dispatches outbound farewell messages **before** sending the final `PATCH /rest/v1/customer_chat_meta`.
+  * Even if the worker or outbound message temporarily touches `last_message` or metadata, the subsequent `PATCH` (`Prefer: return=minimal`) authoritatively writes `folder = "done"`, `status = "completed"`, `catered_by = null`, `is_done = true` as the final persisted Supabase state.
+
+### 3. Outgoing Message & Stale Delta Protection for Done Threads
+* **Zero Outbound Reopen Policy (`ChatRepository.kt`):**
+  * Stale inbound deltas and outgoing Page/rider messages (including the farewell auto-reply) are strictly prohibited from reopening Done threads to Inbox across all sync handlers (`parseSupabaseChats`, `maybeAutoReleaseDoneThread`, `fetchMessagesSb`, `fetchRecentGlobalMessages`, `forceMessageUpdate`, and `buildMetaUpdatesWithAutoRelease`).
+  * While within the 15-second `recentlyCompletedGuard` window, in-flight delta rows that still report older pre-completion folders (`catering` or `inbox`) are ignored and forced to `done`.
+  * Threads can now only be reopened to `Inbox` by genuine inbound customer messages (`!isFromPage && !isOutgoing && !isRider`) with timestamps strictly newer than the thread's completion timestamp.
+
 ## Version 2.7.4 (2026-11-19)
 
 ### 1. Zero-Drain Delta Watermark Sync for Customer Chats & Chats Meta
