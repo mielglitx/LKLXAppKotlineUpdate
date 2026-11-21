@@ -1,5 +1,32 @@
 # Lokalex App Release Notes
 
+## Version 2.9.2 (2026-11-22)
+
+### 1. Automatic Floating Sidebar Window Mode
+* **System Overlay Sidebar Bubble (`FloatingOverlayManager.kt`, `MainActivity.kt`):**
+  * Added floating sidebar overlay window with `SYSTEM_ALERT_WINDOW` permission support.
+  * Automatically pops a floating overlay bubble on the edge of the screen whenever the app is minimized, user presses home, or switches to another app (navigation maps, phone calls, merchant apps).
+  * Instant tap on the overlay brings Lokalex back to the foreground; drag to reposition or swipe to the dismiss dock to close.
+  * Added double-back guard (`minimizeWithDoubleBackGuard`) preventing accidental app closures.
+
+### 2. Store Directory Menus Reconnected
+* **Store Menus Data Integration (`MediaUploadRepository.kt`, `DirectoryAndRatesRepository.kt`):**
+  * Reconnected store directory menus to dedicated `store_menus` table.
+  * Added persistent local disk caching in `store_menu_cache/` returning instant `file://$path` URIs.
+  * Reconnected directory record metadata to show live menu page count badges (`View Menu (N)`) on store cards.
+
+### 3. Reconnection, App Resume & Roster/Commission Sync Hardening
+* **Roster & Commission Desynchronization Fixes (`LokalexForegroundService.kt`):**
+  * Added `REASON_RESUME` to `isFullWakeSync` and forced `refreshRoster(bypassWsCache = true)` so the queue lineup and rider statuses refresh immediately upon app resume.
+  * Triggered `refreshReceipts()` on resume, network recovery, and WebSocket reconnect so gross earnings and commissions update automatically.
+  * Eliminated half-open TCP zombie sockets on cellular signal drops by proactively tearing down stale Phoenix channels and re-subscribing on `networkCallback.onAvailable()`.
+
+### 4. Ghost Catering Chat Cleanup & Delivery Rates Filter Scoping
+* **Ghost Catering Purge (`ChatFeedScreen.kt`):**
+  * Enforced that if a chat's assigned rider is not in Catering status in the live roster, the chat is immediately removed from the Catering folder into Done.
+* **Delivery Rates Filter Scoping (`DirectoryDialog.kt`, `ChatFeedScreen.kt`):**
+  * Filtered destination dropdown and chatroom delivery rate quick-chips strictly to municipalities with saved rate records under the selected Starting Hub.
+
 ## Version 2.9.0 (2026-11-21)
 
 ### 1. Fixed Catering Chat Disappearance on App Close/Minimize & Sync
