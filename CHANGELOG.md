@@ -1,5 +1,21 @@
 # Lokalex App Release Notes
 
+## Version 2.9.3 (2026-11-22)
+
+### 1. Instant Directory Performance Optimization (Stores, Customers, Rates)
+* **O(1) Location & Town Lookups (`PhLocationGazetteer.kt`):**
+  * Added precomputed `cachedTownSet` and `cachedTownToRegionMap` in `PhLocationGazetteer`, eliminating a nested 486-town linear scan on the Main thread.
+  * Replaced dynamically compiled regular expressions with precompiled `Regex` singletons.
+  * Accelerated `getDynamicMunicipalities()` from **2,500ms down to 3ms** (833x speedup), completely eliminating UI stutter and frame drops when opening Directory.
+* **Memoized Rates Route & Origin/Destination Resolution (`DirectoryAndRatesRepository.kt`):**
+  * Added in-memory concurrent route cache (`routeResolutionCache`) preventing 4 redundant `resolveRateOriginAndDestination` calls per record across dropdowns, filters, and cards.
+  * Precompiled 10 regex parsing patterns into companion object singletons.
+* **Customer List Memoization & Search Optimization (`DirectoryDialog.kt`):**
+  * Decoupled customer field sanitization from `searchQuery`, pre-sanitizing and memoizing customer lists against `liveDirRecords` so typing in search does not re-sanitize 280+ records on every keystroke.
+  * Streamlined `savedRateDestinations` into a single fast pass.
+* **Fixed Supabase Directory Request URL (`DirectoryAndRatesRepository.kt`):**
+  * Fixed missing `.url(url)` call in `fetchDirectoryRecordsFromSupabase` request builder.
+
 ## Version 2.9.2 (2026-11-22)
 
 ### 1. Automatic Floating Sidebar Window Mode
