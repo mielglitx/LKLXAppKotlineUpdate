@@ -1,5 +1,13 @@
 # Lokalex App Release Notes
 
+## Version 2.9.4 (2026-11-22)
+
+### 1. Commission Report Layout & Bottom Settlement Totals
+* **Bottom Settlement Totals Alignment (`CommissionScreen.kt`, `CommissionReportFormatter`):**
+  * Repositioned the final settlement totals (`Final Total Gross Income`, `Net Income`, and `To Pay`) to the very bottom of both Rider and All Riders commission reports.
+  * Ensures all itemized customer delivery orders, overtime orders, sanction deductions, and rider breakdown lists appear first, so scrolling to the end of the report presents the final bottom-line settlement immediately above the report footer.
+  * Extracted report building logic into `CommissionReportFormatter` with comprehensive JVM unit tests (`testCommissionReportTotalsPlacementAtBottom`).
+
 ## Version 2.9.3 (2026-11-22)
 
 ### 1. Instant Directory Performance Optimization (Stores, Customers, Rates)
