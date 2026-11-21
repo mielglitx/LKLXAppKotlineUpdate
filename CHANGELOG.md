@@ -1,5 +1,24 @@
 # Lokalex App Release Notes
 
+## Version 2.9.0 (2026-11-21)
+
+### 1. Fixed Catering Chat Disappearance on App Close/Minimize & Sync
+* **Protected Active Catering Ownership (`RosterAndShiftRepository.kt`, `ChatFeedScreen.kt`):**
+  * Eliminated destructive remote `scheduleOrphanedCateringCleanup` calls on today's active chats that previously sent PATCH requests to Supabase marking actively catered threads as `Done` and erasing `cateredByRiderId` / `cateredByRiderName` when the app was minimized or closed.
+  * Hardened `syncActiveCateringCacheFromState` to retain all active catered entries from today's active shift in `_activeCateredList` and `ActiveCateringLocalCache`, preventing them from being wiped on background sync or app resume.
+  * Relaxed `findActiveCateredOwner` from overly strict comma-separated string matching in `roster.customerName`, trusting valid active catering assignments as long as the assigned rider is on duty and not offline/ended.
+  * Ensured `resolveWithActiveCatered` and `filteredChats` in `ChatFeedScreen.kt` preserve actively catered chats in the Catering folder across all app lifecycle events.
+
+### 2. Restored Proper Folder Categorization & Filter Isolation
+* **Prevented False `isDone` Hijacking (`ChatMeta.kt`, `ChatRepository.kt`):**
+  * Updated `ChatMeta.isDone` and `ChatRepository.parseSupabaseChats` so that `status = "completed"` no longer hijacks explicit non-done folders (`Stores`, `Applicant`, `Inbox`, `Catering`, `Scheduled`).
+  * Fixed bug where merchant partner chats (`Stores`) or applicants (`Applicant`) or active inbox chats with legacy completed order statuses were being misclassified into the `Done` folder.
+  * Now each chat maps 100% reliably to its intended category: `Inbox`, `Catering`, `Stores`, `Scheduled` / `Followup`, `Applicant`, and `Done`.
+
+### 3. Hardened Directory Rates Destination Filter
+* **Rates Destination Dropdown Scoping (`DirectoryDialog.kt`):**
+  * Ensured the "Destination" filter dropdown in Directory -> Rates displays only cities/municipalities that have saved rate records under the selected Starting Hub, eliminating the dump of all 500+ gazetteer towns.
+
 ## Version 2.8.9 (2026-11-21)
 
 ### 1. Offline Philippine PSGC Location Gazetteer & Barangay Name Guards
