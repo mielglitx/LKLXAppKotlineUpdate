@@ -1,5 +1,54 @@
 # Lokalex App Release Notes
 
+## Version 3.0.0 (2026-11-23)
+
+### 1. Rider of the Week (ROTW) & Flexible Commission Discount
+* **Previous Week (Mon–Sat) Automated Evaluation (`ReceiptAndCommissionRepository.kt`):**
+  * Automatically evaluates the top performing rider over the previous calendar week from Monday to Saturday using the 4-metric Performance Module (35% Income, 35% Orders, 15% Time, 15% Attendance).
+  * Employs deterministic ISO week keying (`computeCurrentWeekKey`), ensuring evaluations run seamlessly without duplicate database queries. Results are cached inside the Supabase `commission` setting with zero extra bandwidth drain.
+* **Flexible Commission Discount Deduction (`ReceiptAndCommissionRepository.kt`):**
+  * Automatically deducts the configured discount percentage (e.g., -2%) from the winner's regular commission on admin-selected days (default Monday–Friday, or custom day toggles).
+  * Flows down dynamically to all commission tabs, earnings totals, clipboard summaries, and text exports with source rule tag `"Rider of the Week (🏆 -X%)"`. On non-affected days, commission reverts cleanly to regular rates.
+* **Comprehensive Admin ROTW Settings (`AdminSettingsDialogs.kt`):**
+  * Added dedicated **Rider of the Week (ROTW)** section in `AdminCommissionSettingsDialog` with master on/off switch, discount percentage input, quick day presets (`Mon–Fri`, `All 7 Days`), 7-day individual toggle pills, winner card with score breakdown, recalculate trigger, and manual winner override dropdown.
+  * Added granular eligibility controls: `All Active Riders`, `By Role` (Couriers only, Team Leaders, Admins), or `Custom Riders` with a searchable multi-select modal dialog (`showRotwEligibleRiderModal`).
+* **Gold Award Card UI & Shimmering Sparkles (`DayOffHighlightModifiers.kt` & `RotationsScreen.kt`):**
+  * Designed custom `Modifier.riderOfTheWeekGoldBorder` rendering a radiant metallic gold gradient border (`#FFE259` to `#FFA751`), outer warm halo glow, and sparkling 4-point gold stars.
+  * Crowned winner card with metallic golden backgrounds, `#🏆` queue tag, `🏆` icon beside their name, and `🏆 RIDER OF THE WEEK • -X% COMMISSION` badge across Available, Catering, and On Break rotation cards.
+
+### 2. Performance Tracker Monitored Riders Filter
+* **Sticky Filter Bar (`AdminSettingsDialogs.kt`):**
+  * Added a dedicated **👥 Monitored Riders** filter bar directly inside `AdminPerformanceTrackerDialog` allowing admins to monitor `All`, `🛵 Couriers Only`, `⭐ Team Leaders`, or `⚙️ Individual Selection` (searchable multi-select modal).
+  * Dynamically recalculates rankings, percentiles, average ratings, and totals strictly across the selected group.
+
+### 3. Team Leader (TL) Commission Inclusion & Role Tagging
+* **Courier Classification for Commission (`CommissionScreen.kt`):**
+  * Corrected commission classification so Team Leaders (such as Hero Dinong and Mark) are recognized as active couriers who earn regular commission and pay company fees, not 0% commission-exempt admins.
+  * Removed `tlHasAdminPowers` inclusion in `adminNames` and enforced `matchingRider.isTL -> false` in `isRiderAdmin`.
+  * Restored Team Leaders to the Select Rider modal (`ADMIN VIEW: SELECT RIDER`), the dropdown trigger card, the `uniqueRiderNames` list, the `RIDER SUMMARY` accordion cards, and the All Riders text report.
+* **Team Leader Role Tagging (`CommissionScreen.kt` & `AdminSettingsDialogs.kt`):**
+  * Replaced misleading `0% Admin Gross` with their true calculated commission rate (e.g. `15% • Regular Commission`) and added a prominent **`⭐ Team Leader`** (or `⭐ TL`) badge next to their name across the Commission Accordion card, the Select Rider modal, the Individual Overrides list, and the ROTW candidate dialogs.
+  * Fixed top bar role label: Evaluates `isTL` first so Team Leaders viewing the screen see `TL` instead of `ADMIN`.
+
+### 4. Full-Duplex Facebook Messenger Real-Time Parity
+* **Automatic Page Echo Ingestion (`cloudflare-worker.js` v3.3.0 & Meta Graph API):**
+  * Subscribed the Facebook App to `message_echoes` so all outbound messages typed by page admins or riders from Meta Business Suite / Facebook Messenger apps are instantly delivered via webhook to the Cloudflare Worker and Supabase in real-time.
+  * Reconciled message deduplication so outbound messages sent from the Lokalex native app are recognized and not duplicated upon receiving the Meta webhook echo.
+  * Fixed the Cloudflare Worker `/api/sync-messages` endpoint to query native Facebook Page conversations (`user_id=${cleanPsid}`) instead of Instagram endpoints, preventing OAuth 2534013 errors.
+* **Smart On-Room-Open Delta Catch-Up (`ChatFeedScreen.kt`):**
+  * Whenever a rider opens any customer conversation, a silent background delta check is triggered with a 30-second per-thread cooldown, guaranteeing the latest tail messages are fetched immediately without repetitive network requests.
+* **Silent Gap / Desync Auto-Healing (`ChatFeedScreen.kt`):**
+  * Detects when the thread list preview (`ChatMeta.lastMessage`) has a newer message than the displayed conversation bubbles, automatically pulling the missing messages from Facebook Graph API via the Cloudflare Worker in the background with zero manual button presses required.
+
+### 5. Accurate Date & Time Display
+* **Past Messages Calendar Date Stamping (`ChatConversationPane.kt`):**
+  * Messages sent on past days (yesterday or older) now clearly display their exact calendar date alongside the time (e.g. `Nov 21 • 4:40 PM` or `Nov 21, 2025 • 4:40 PM`), eliminating all guesswork when reviewing previous orders.
+  * Messages sent on the current day (today) remain completely clean and uncluttered, showing time only (`4:48 PM`).
+* **Centered Day Divider Badges (`ChatConversationPane.kt`):**
+  * Added subtle, centered calendar day pills (`Today`, `Yesterday`, `Sat, Nov 21`) between messages across calendar day transitions, matching Facebook Messenger and WhatsApp standards.
+* **Thread List Last-Active Timestamps (`ChatThreadListPane.kt`):**
+  * Added compact relative timestamps (`4:48 PM`, `Yesterday`, or `Nov 21`) directly to customer cards in the inbox/catering list so riders can see at a glance when each customer last chatted.
+
 ## Version 2.9.9 (2026-11-22)
 
 ### 1. Seamless Rider Alias Resolution & Zero-Duplicate Commission Reports
