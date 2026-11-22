@@ -1,5 +1,30 @@
 # Lokalex App Release Notes
 
+## Version 2.9.9 (2026-11-22)
+
+### 1. Seamless Rider Alias Resolution & Zero-Duplicate Commission Reports
+* **Authoritative Roster Identity Resolution (`CommissionScreen.kt`):**
+  * Updated `ridersToDisplay` to resolve each receipt's rider identity against active roster members using `LokalexRepository.matchesRiderIdentity()`.
+  * Merged all historical and alias receipts (e.g., `"Allan"` & `"Allan Aquino"`, `"Mark"` & `"Mark Sanqui"`, `"Marlon"` & `"Marlon Sawan"`) under their single authoritative roster card.
+  * Completely eliminated duplicate dummy accordion cards on the Commission screen, summing gross earnings, delivery fees, and net payouts accurately under the rider's official registered name.
+* **Filter Scope Synchronization (`CommissionScreen.kt`):**
+  * Updated `filteredReceipts` so selecting a rider in the inspector/admin filter dropdown (e.g., selecting `"Allan Aquino"`) accurately includes all deliveries performed under alias/short names (`"Allan"`), ensuring 100% accounting accuracy.
+
+### 2. Manual Commission Record Hardening & Tombstone Eviction
+* **Automatic Tombstone Eviction (`ReceiptAndCommissionRepository.kt`, `LokalexRepository.kt`):**
+  * Added `removeReceiptTombstone()` to evict suppression keys whenever an admin manually saves or restores a commission record (`saveManualCommissionRecord`).
+  * Prevents the "ghost tombstone" bug where deleting an order previously caused newly created manual records for the same customer to be silently suppressed from local memory and UI.
+  * Protected `manual_` receipts in `isReceiptTombstonedOrVoided()` so explicit manual records are only ever tombstoned if their exact primary key is deleted, rather than falling victim to fuzzy customer-name tombstones.
+* **Primary Key & Completed Epoch Binding (`CommissionScreen.kt`, `ReceiptAndCommissionRepository.kt`):**
+  * Updated the `+ Manual Record` dialog to attach the rider's primary `riderId` (`"127845"`) and canonical display name (`"Allan Aquino"`).
+  * Automatically sets `completedAt`, `cateredAt`, and `startedAt` timestamps upon creation so the Roster lineup and Gross dock immediately recognize the manual record as finished without requiring app restarts.
+
+### 3. Catering Lineup & Live Chat Parity
+* **Multi-Directional Identity Matching (`RotationsScreen.kt`, `RosterAndShiftRepository.kt`, `CateredCustomersScreen.kt`):**
+  * Integrated `LokalexRepository.matchesRiderIdentity()` across all catering group filters in `RotationsScreen.kt`: compares active chats, receipts, and cached entries against roster riders using fuzzy first-name and ID matching.
+  * Solved the issue where catered customers remained stuck in the rotation list under riders who had been renamed on the roster (e.g., Mark $\rightarrow$ Mark Sanqui), ensuring orders clear immediately once marked done.
+  * Updated `releaseCustomerFromRosterCatering()` in `RosterAndShiftRepository.kt` to identify the correct catering rider when orders are completed, releasing customer names from live roster strings in real-time.
+
 ## Version 2.9.8 (2026-11-22)
 
 ### 1. Rotation Lineup & Live Chat Catering Parity
