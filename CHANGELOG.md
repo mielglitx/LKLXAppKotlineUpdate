@@ -1,5 +1,29 @@
 # Lokalex App Release Notes
 
+## Version 2.9.6 (2026-11-22)
+
+### 1. Map Picker Google Maps Output & Direct Navigation
+* **Google Maps Output Format (`ChatRoomComponents.kt`, `CartReceiptScreen.kt`, `ChatFeedScreen.kt`):**
+  * Updated `OsmMapPickerDialog` so confirming a picked pin outputs canonical Google Maps URLs (`https://maps.google.com/?q=lat,lng`) instead of OpenStreetMap links.
+  * Updated Cart delivery address generation and live location pin sharing in chat to use Google Maps links, allowing customers and riders to tap the link and navigate immediately in Google Maps.
+* **Direct Navigation Compatibility (`ChatRoomComponents.kt`):**
+  * Updated `buildGoogleMapsUrlFromAny` to automatically parse and convert OpenStreetMap URLs into Google Maps search coordinates before launching `com.google.android.apps.maps`.
+
+### 2. Automatic In-App & Background Database Migration (OSM to Google Maps)
+* **Directory Migration (`DirectoryAndRatesRepository.kt`):**
+  * Auto-detects legacy OpenStreetMap links during full directory sync and delta sync across `lat_lon_link`, `extra_locations`, `subtitle`, and `detail`.
+  * Seamlessly converts them to Google Maps URLs and patches the updated records back to Supabase `directory` table (`id=customers`, `id=stores`, `id=barangays`) in the background.
+  * Auto-sanitizes customer directory entries upon creation and profile updates.
+* **Chat Metadata Migration (`ChatRepository.kt`):**
+  * Automatically detects OpenStreetMap links in `customer_chat_meta` (`google_maps_url`), converts them to Google Maps URLs, and persists the update to Supabase.
+
+### 3. Android 14 Floating Window Lifecycle & Admin Access
+* **Gesture Navigation Optimization (`MainActivity.kt`):**
+  * Added `onStop()` lifecycle hook (`!isChangingConfigurations && canShowFloatingOverlay()`) ensuring full Gesture Navigation swipe-to-home and app switching reliably invokes the floating window on Android 14.
+* **Enabled Admin Access & Indicator (`MainActivity.kt`, `FloatingOverlayManager.kt`):**
+  * Extended `canShowFloatingOverlay()` so Admin accounts can access the floating overlay without needing to clock into the daily rider delivery lineup.
+  * Added purple pill stroke and `"Admin"` status display for authenticated administrators.
+
 ## Version 2.9.5 (2026-11-22)
 
 ### 1. Solo & Multiple Orders Catering Completion & Lineup Transition Hardening
