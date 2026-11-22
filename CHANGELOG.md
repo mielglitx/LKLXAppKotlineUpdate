@@ -1,5 +1,28 @@
 # Lokalex App Release Notes
 
+## Version 2.9.5 (2026-11-22)
+
+### 1. Solo & Multiple Orders Catering Completion & Lineup Transition Hardening
+* **Solo Order Completion (`ChatFeedScreen.kt`, `RotationsScreen.kt`, `RosterAndShiftRepository.kt`):**
+  * Verified and reinforced the transition to `Available` when a rider catering a solo order marks it as Done across all three interaction surfaces: 1) inside Chat Conversation view (`executeMarkCustomerDone`), 2) inside Rotation lineup card (`executeDone`), and 3) inside thread card (`onQuickMarkDone`).
+  * Clearing the solo order automatically purges active catering cache, sets `customerName = ""`, updates status to `Available`, and positions the rider into the available queue.
+* **Multiple Orders Completion (`RosterAndShiftRepository.kt`, `ChatFeedScreen.kt`, `RotationsScreen.kt`):**
+  * When a multi-catering rider completes 1 of many orders, the app releases only that customer to Done, retains the remaining unfinished orders, updates `customerName` to the comma-separated remaining list, and maintains the rider in `Catering` status.
+  * When only 1 order remains and is marked Done, the customer is released to Done and the rider is immediately transitioned to `Available` in the lineup queue.
+* **Centralized `releaseCustomerFromRosterCatering` (`RosterAndShiftRepository.kt`, `LokalexRepository.kt`):**
+  * Extracted and unified the canonical order release and lineup transition logic into `RosterAndShiftRepository`, eliminating screen-level logic duplication and ensuring cross-device consistency.
+
+### 2. Catering Rider Attribution in Farewell End Messages & Folder Gating
+* **Preserved Catering Rider Identity (`ChatRepository.kt`):**
+  * Authoritatively resolved the catering rider identity (`effectiveCateredByRiderName`, `activeEntry.riderName`, roster catering rider, or receipt rider) over the executing admin user in `markCustomerDone` and `sendEndChatAutoMessageIfEnabled`.
+  * When a Team Leader or Admin marks a customer Done on behalf of a rider, the automated farewell message sent to the customer is signed by the rider who actually catered and delivered the order (e.g., `"- Allan"`), and NEVER signed by the TL or Admin (e.g., `"- Amiel"` / `"- Sarah"`).
+* **Strict Folder Gating & Applicant Protection (`ChatRepository.kt`):**
+  * Gated farewell message dispatch strictly to actively catered deliveries.
+  * Job applicant threads (`folder == "applicant"` or `isApplicant == true`) strictly bypass and never receive customer delivery farewell messages under any circumstances.
+  * Un-catered inbox inquiries and un-catered scheduled orders skip farewell messages; actively catered scheduled orders receive the farewell message signed by their catering rider.
+* **Exhaustive Simulation Suite (`LokalexFunctionSimulationTest.kt`):**
+  * Added 3 deep unit simulation tests verifying solo completions, multi-cater order-by-order completions, lineup queue entries, catering rider message attribution, and folder gating (all 75 tests passing).
+
 ## Version 2.9.4 (2026-11-22)
 
 ### 1. Commission Report Layout & Bottom Settlement Totals
