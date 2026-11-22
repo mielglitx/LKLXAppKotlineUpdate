@@ -1,5 +1,33 @@
 # Lokalex App Release Notes
 
+## Version 2.9.7 (2026-11-22)
+
+### 1. Rider Account ID Alignment, Profile Hydration & Chat Ownership Hardening
+* **Database & Roster Profile Synchronization (`RosterAndShiftRepository.kt`, `LoginScreen.kt`, `LokalexRepository.kt`):**
+  * Synchronized remote database records across Supabase `riders`, `roster`, and `logins` tables for all active riders (including Marlon Sawan `65826646`, Mark Sanqui `5752315`, and Allan Aquino `127845`).
+  * Automated deduplication in `refreshRoster()` to drop rogue ghost clones (such as `r_allan`) and asynchronously delete orphan duplicate rows from remote Supabase `roster` and `logins` tables.
+  * Added synchronous zero-byte disk hydration for `_riderProfile` (`telegramId`, `name`, `avatarUrl`, `role`) on cold start from `lokalex_prefs`, eliminating unhydrated blank `telegramId` states across app boots.
+  * Updated `LoginScreen.kt` to persist both `telegramId` and `riderId` to `lokalex_prefs`.
+  * Synchronized official registered profile names and telegram IDs from `cachedRiderProfiles` (`riders` table) into all `Rider` copies during `refreshRoster()`, preventing discrepancies between remote roster entries and official user profiles.
+* **Effective Rider Resolution & Fallbacks (`MainScreen.kt`, `ChatFeedScreen.kt`, `RotationsScreen.kt`):**
+  * Hardened `effectiveRiderId`, `currentRider`, and `effectiveCurrentRider` resolution across `MainScreen`, `ChatFeedScreen`, and `RotationsScreen` with `lokalex_prefs` fallbacks.
+  * Integrated `matchesRiderIdentity()` with bidirectional prefix matching and first-name equality (while preventing false collisions between distinct riders with common first names), preventing active catering riders from resolving as null or falsely defaulting to `#End` status and red dock highlights.
+* **Chat Room Catering Ownership Guard (`ChatMeta.kt`):**
+  * Hardened `ChatMeta.isCateredByRider()` to check explicit assigned and current rider IDs first, falling back to exact normalized name equality only when caller ID is blank or unassigned.
+  * Guaranteed that catering delivery riders retain full message composer access for their own assigned customer orders without false chat lock barriers.
+
+### 2. Floating Window Badge Counters & Real-Time Lineup Queue Alerts
+* **Dual Unread Badge Counters (`FloatingOverlayManager.kt`):**
+  * Updated docked floating window pill label to display `Inbox: <count> / Catered: <count>`, distinguishing new incoming unserved customer inquiries from replies by the rider's own catered customers.
+* **First-in-Line Queue Alerts in Background & Floating Mode (`LokalexForegroundService.kt`):**
+  * Added real-time background first-in-line alert detection (`checkFirstInLineTransition`): actively chimes, vibrates, acquires a wake lock, and posts a system notification whenever an on-duty rider advances to #1 in the queue lineup while the app is in floating window or background mode.
+
+### 3. Unlogged & Offline Rider Exclusion from Active Rotation Queue
+* **Strict Lineup Eligibility (`Rider.kt`, `RosterAndShiftRepository.kt`, `RotationsScreen.kt`, `MainScreen.kt`):**
+  * Enforced `isActivelyAvailable` requiring `isAvailable && hasLoggedInToday && !isOffline && !isEnd` across `RotationsScreen` (`rawAvailable`), `MainScreen` (`availableQueue`, `availableFleetCount`), `FloatingOverlayManager`, and `LokalexForegroundService`.
+  * Fixed `refreshRoster()` prior-day fallback vulnerability when `loginsFetchSucceeded == true` and `login == null` (authoritative proof the rider has not logged in today), strictly setting `status = if (dayOff) "Day Off" else "End"`, `customerName = ""`, `timeIn = null`, `timeOut = null`, `isOffline = true`, `hasLoggedInToday = false`.
+  * Completely eliminated historical clock string fallback that synthesized today's date from prior-day time strings, preventing unlogged riders from appearing in the active rotation queue or receiving false lineup alerts.
+
 ## Version 2.9.6 (2026-11-22)
 
 ### 1. Map Picker Google Maps Output & Direct Navigation
