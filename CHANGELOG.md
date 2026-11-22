@@ -1,5 +1,22 @@
 # Lokalex App Release Notes
 
+## Version 3.0.1 (2026-11-23)
+
+### 1. Admin Void / Cancel Login Feature
+* **Dedicated Void Login Action (`RiderLoginsScreen.kt` & `StatusActionDialogs.kt`):**
+  * Added `🚫 Void / Cancel Login` option to both `RiderStatusSelectDialog` and `EditTimeInDialog` with a dedicated `VoidLoginConfirmDialog` warning modal.
+  * Ensures that accidental or mistaken rider logins (e.g., rider was never actually on duty) can be safely and completely cancelled by administrators without leaving orphan shift counts.
+* **Complete Database & Cache Eviction (`RosterAndShiftRepository.kt` & `LokalexRepository.kt`):**
+  * Sends an authoritative HTTP `DELETE` to Supabase `/rest/v1/logins` matching `rider_id`, `rider_name`, and Manila calendar date `login_date`.
+  * Evicts the rider from in-memory `cachedLoginsToday`, immediately updating the login shift counters (e.g. from 1/8 back to 0/8).
+  * Automatically clears active catered customer orders for the voided rider via `clearActiveCateredForRider`.
+  * Authoritatively resets the rider's row in Supabase `/rest/v1/roster` to `status: "End"`, `timeIn: null`, `timeOut: null`, `loginDate: null`, `loginTimestamp: null`, `isOffline: true`, and `isLoggedIn: false`, cleanly removing them from active lineup rotations.
+
+### 2. Device Identity Scoping & Ghost Status Protection
+* **Elimination of Fallback Mutation (`MainScreen.kt`):**
+  * Removed dangerous fallback `?: eligibleRiders.firstOrNull()` in `effectiveRider` calculation and status dock `targetRider`.
+  * Guarantees that when an administrator, merchant, or non-courier user opens the app or interacts with status buttons, their device will never mistakenly proxy or toggle the shift state of the first courier in the roster (Allan Aquino).
+
 ## Version 3.0.0 (2026-11-23)
 
 ### 1. Rider of the Week (ROTW) & Flexible Commission Discount
