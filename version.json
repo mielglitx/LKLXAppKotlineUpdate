@@ -6,7 +6,7 @@
     "fallbackUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
     "checksum": "dbfabb49a86195445b4179529251fe5cc5ed26a784e5c04384572927bbaf5dd1",
     "updatedAt": "2026-11-22T08:12:00.000Z",
-    "notes": "Lokalex Native Compose v2.9.5 (Build 295): Solo & multiple orders catering completion hardening across Chat, Rotation, and Chatcard. Order-by-order release preserves remaining active orders in Catering and transitions to Available when 0 remain; authoritative catering rider attribution in farewell end messages (ensuring messages are signed by the delivery rider even when marked Done by Admin/TL); strict applicant & un-catered inbox/scheduled gating.",
+    "notes": "Lokalex Native Compose v2.9.5 (Build 295): Solo & multiple orders catering completion hardening across Chat, Rotation, and Chatcard. Order-by-order release preserves remaining active orders in Catering and transitions to Available when 0 remain; authoritative catering rider attribution in farewell end messages (ensuring messages are signed by the delivery rider even when marked Done by Admin or TL); strict applicant & un-catered inbox/scheduled gating.",
     "nativeVersion": "2.9.5",
     "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
     "isApkUpdate": true,
