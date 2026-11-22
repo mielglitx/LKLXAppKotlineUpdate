@@ -1,5 +1,30 @@
 # Lokalex App Release Notes
 
+## Version 2.9.8 (2026-11-22)
+
+### 1. Rotation Lineup & Live Chat Catering Parity
+* **Receipt-Based Active Catering Pruning (`RosterAndShiftRepository.kt`, `RotationsScreen.kt`):**
+  * Synchronized `syncActiveCateringCacheFromState` with Supabase `catered` receipts (`_receiptList`): automatically prunes finished customer orders across all devices immediately as soon as a delivery receipt is completed (`completedAtMs > 0L` or `doneTime != "—"`).
+  * Resolved the local cache blind spot where completed orders lingered on other riders' phones because `data->>folder != done` queries intentionally exclude archived Done chats from bandwidth sync.
+  * Added `receipts` memoization to `cateringGroups` in `RotationsScreen.kt`, actively filtering out finished deliveries so only genuinely active catering orders are displayed under each rider's card.
+* **Ghost Customer Card Purging (`RosterAndShiftRepository.kt`, `RotationsScreen.kt`):**
+  * When a cached customer entry has no open chat (`matchChat == null`) and is not currently listed in the rider's live `roster.customerName` string, it is recognized as an un-cleared ghost entry and excluded from rotation cards and cache.
+  * Preserved rapid claims with `isRecentlyClaimed()` so newly assigned orders are protected from premature pruning.
+
+### 2. Real-Time Facebook PSID Fallback Name Auto-Upgrade
+* **Numeric PSID Matching & Prefix Resolution (`ActiveCateringLocalCache.kt`, `RotationsScreen.kt`, `RosterAndShiftRepository.kt`):**
+  * Updated `isRawCustomerIdFallbackName`, `LEADING_ID_PREFIX_REGEX`, and `isSameCanonicalCustomer` to recognize numeric Messenger PSIDs and truncated labels (e.g. `Customer 279860386...` matching `fb_27986038644422174`).
+  * As soon as Meta Graph API resolves the customer's Facebook profile, the cache and the Rotations screen automatically upgrade the display name from the raw PSID to the verified human profile name (e.g. `Rossanne S. Rirao`), ensuring 100% naming parity between Live Chat and Rotations.
+
+### 3. Active Catering Folder Protection
+* **Explicit Active Folder Guard (`ChatMeta.kt`):**
+  * Added `folder.equals("catering", ignoreCase = true)` to `hasExplicitActiveFolder`.
+  * Guarantees that active catering chat threads are protected from false `isDone = true` evaluation when older completed order statuses linger in database metadata, preventing active customers from vanishing from the Live Chat Catering tab into the Done tab.
+
+### 4. Supabase Cloudflare Worker Cardinality Error Resolution
+* **Postgres 21000 ON CONFLICT Deduplication (`worker.js` / Supabase REST):**
+  * Resolved PostgreSQL cardinality violation errors in batch upserts to `customer_chat_meta` by deduplicating entries by composite identity keys and flattening nested `data` payloads.
+
 ## Version 2.9.7 (2026-11-22)
 
 ### 1. Rider Account ID Alignment, Profile Hydration & Chat Ownership Hardening
