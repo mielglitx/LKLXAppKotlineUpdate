@@ -1,5 +1,20 @@
 # Lokalex App Release Notes
 
+## Version 3.0.3 (2026-11-23)
+
+### 1. Startup & Login Crash Hotfix
+* **Layout Constraint Fix (`ChatThreadListPane.kt`):**
+  * Added `Modifier.height(IntrinsicSize.Min)` to the thread card item `Row`.
+  * Prevents Jetpack Compose `IllegalStateException: Vertically scrollable component was measured with an infinity maximum height constraints` caused by unconstrained `fillMaxHeight()` inside a `LazyColumn`.
+* **Safe Touch Interaction Dispatch (`MainActivity.kt` & `LokalexForegroundService.kt`):**
+  * Offloaded `LokalexForegroundService.notifyUserInteraction()` and ETag roster sync from the Android main UI thread to `Dispatchers.IO` via `lifecycleScope.launch`.
+  * Removed direct `startForegroundService` invocation from touch events when `activeInstance == null`, preventing `ForegroundServiceStartNotAllowedException` on Android 12 through 15.
+* **Deterministic Lineup Queue Comparator (`RosterAndShiftRepository.kt`):**
+  * Hardened `sortAvailableRiders` comparator with deterministic tie-breaking (`thenComparing { a, b -> a.id.compareTo(b.id) }`).
+  * Wrapped sorting execution in a safe try-catch returning operational riders fallback, preventing TimSort general contract violations.
+* **Global Error & Crash Reporting (`LokalexApp.kt`):**
+  * Initialized `AppErrorTracker` globally in `LokalexApp.onCreate()` and connected uncaught exception handler directly to remote error reporting in Supabase.
+
 ## Version 3.0.2 (2026-11-23)
 
 ### 1. Inbox Long-Press Multi-Select & Batch Actions
