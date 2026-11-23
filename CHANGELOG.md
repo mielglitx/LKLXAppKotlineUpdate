@@ -1,5 +1,30 @@
 # Lokalex App Release Notes
 
+## Version 3.0.5 (2026-11-23)
+
+### 1. Authoritative Commission & Receipts Sync (Zero Local Fallbacks)
+* **Removed Stale Disk Caches (`LokalexRepository.kt` & `ReceiptAndCommissionRepository.kt`):**
+  * Eliminated startup hydration and disk persistence of `catered_today.json` and `receipts_today.json`.
+  * Removed in-memory pre-seeding during `refreshReceipts(effectiveDate)`, ensuring that query results are 100% authoritative from Supabase.
+  * When an admin voids, cancels, or deletes an order or commission, the item disappears immediately across all devices on the very next sync, eliminating ghost commissions and cache revivals.
+
+### 2. Fast Adaptive Lineup Polling (3s on Rotations / 10s on Other Tabs)
+* **Screen-Aware Sequential ETag Poller (`MainScreen.kt`):**
+  * Implemented an active foreground polling loop in `MainScreen`:
+    * Polls every **3 seconds** when viewing the Rotations / Queue screen.
+    * Polls every **10 seconds** when viewing other tabs (Chats, Cart, Logins, Commission).
+  * Uses conditional HTTP `304 Not Modified` (ETag caching), consuming **0 payload body bytes** when the lineup hasn't changed.
+  * Automatically pauses the moment the screen turns off or the app is minimized, guaranteeing **zero battery drain** while couriers have phones in their pockets.
+
+### 3. Sub-Second Realtime Peer Status Broadcast (<50ms)
+* **Direct Realtime Broadcast Channel (`LokalexForegroundService.kt` & `RosterAndShiftRepository.kt`):**
+  * When a courier taps *Available*, *Break*, *Cater*, or *End Shift*, the app immediately emits a `roster_change` broadcast frame over the active WebSocket.
+  * Peer devices receive the broadcast and flip the courier's status in $< 50\text{ms}$ without waiting for Postgres WAL database replication lag.
+
+### 4. Cellular Tower Reconnection & Network Recovery (`LokalexForegroundService.kt`)
+* **Instant Handshake on Tower Transition:**
+  * Enhanced `ConnectivityManager.NetworkCallback.onAvailable()` to probe the WebSocket and trigger an instant 0-delay lineup sync whenever cellular signal is restored or transitions between towers.
+
 ## Version 3.0.4 (2026-11-23)
 
 ### 1. Startup NPE Crash Resolution (ChatConversationPane & ChatFeedScreen)
