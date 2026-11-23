@@ -3,13 +3,47 @@
     "versionName":  "3.0.3",
     "versionCode":  303,
     "nativeVersion":  "3.0.3",
-    "url":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
+    "url":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.3.apk",
     "fallbackUrl":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
-    "apkUrl":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
+    "apkUrl":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.3.apk",
     "checksum":  "ddcf63e3f5a07b58214a45896402144d5f34e0c6cc3ac23f326de673ccc49fdc",
     "updatedAt":  "2026-11-23T02:36:00.000Z",
     "notes":  "Lokalex Native Compose v3.0.3 (Build 303): Hotfix resolving startup and user login crash. Fixed unconstrained vertical measurement in ChatThreadListPane, offloaded user interaction sync to Dispatchers.IO to prevent ForegroundServiceStartNotAllowedException, added deterministic tie-breaking and safety fallbacks to sortAvailableRiders, and initialized global AppErrorTracker in LokalexApp.onCreate().",
     "isApkUpdate":  true,
     "isApkOnly":  true,
-    "forceApk":  true
+    "forceApk":  true,
+    "releases": [
+        {
+            "versionName": "3.0.3",
+            "versionCode": 303,
+            "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.3.apk",
+            "releaseDate": "2026-11-23",
+            "headline": "Hotfix: Startup & Login Crash Resolution, Layout Constraint & Gestures Hardening",
+            "notes": "Hotfix resolving startup and user login crash. Fixed unconstrained vertical measurement in ChatThreadListPane, offloaded user interaction sync to Dispatchers.IO, added deterministic tie-breaking to sortAvailableRiders."
+        },
+        {
+            "versionName": "3.0.2",
+            "versionCode": 302,
+            "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.2.apk",
+            "releaseDate": "2026-11-23",
+            "headline": "Zero-Data Fast Reconnection, Lineup Fallback Hardening & Inbox Multi-Select",
+            "notes": "Zero-data fast user interaction reconnector with ETag 304 cache, zombie socket auto-healing, parallelized roster and login queries, and inbox long-press multi-select."
+        },
+        {
+            "versionName": "3.0.1",
+            "versionCode": 301,
+            "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.1.apk",
+            "releaseDate": "2026-11-23",
+            "headline": "Admin Void Login, Ghost Status Protection & Team Leader Commission Inclusion",
+            "notes": "Admin Void / Cancel Login option in Logins modal to permanently delete accidental shift records and reset status to End."
+        },
+        {
+            "versionName": "3.0.0",
+            "versionCode": 300,
+            "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.0.apk",
+            "releaseDate": "2026-11-23",
+            "headline": "Rider of the Week (ROTW), Performance Monitoring Filter, Team Leader Commission",
+            "notes": "Rider of the Week (ROTW) weekly automation, monitored riders filter in Performance Tracker, Team Leader commission inclusion & role badges."
+        }
+    ]
 }
