@@ -1,5 +1,33 @@
 # Lokalex App Release Notes
 
+## Version 3.0.4 (2026-11-23)
+
+### 1. Startup NPE Crash Resolution (ChatConversationPane & ChatFeedScreen)
+* **Root Cause & Telemetry:**
+  * Diagnosed remote Supabase error log (`err_1795401627439_304`) triggering `NullPointerException: Attempt to invoke virtual method 'String ChatMessage.getSender()' on a null object reference` inside `ChatConversationPane.kt` and `ChatFeedScreen.kt` during startup for account `4547425` and other restored chat sessions.
+* **Defensive Chat Model & Deduplication (`ChatMeta.kt`):**
+  * Added `safeSender: String` property to `ChatMessage` defaulting safely to empty string if `sender` is null or blank.
+  * Hardened `ChatMessage.deduplicateMessages` to accept `List<ChatMessage?>` and filter out both null entries and blank IDs before sort/dedupe passes.
+* **Hardened Chat Conversation & Feed Viewports (`ChatConversationPane.kt` & `ChatFeedScreen.kt`):**
+  * Filtered `messages.filterNotNull().filter { it.id.isNotBlank() }` on `displayMessages`.
+  * Guarded `replyTargetMessage` with safe local reference and `currentReplyTarget.sender.orEmpty().ifBlank { ... }`.
+  * Guarded `quotedIndex` candidate and quoted sender labels with null checks.
+  * Replaced all raw `.sender` calls in message bubbles and feed previews with `.sender.orEmpty()`.
+* **Hardened Local SQLite Message Cache (`ChatMessageLocalCache.kt`):**
+  * Guarded cursor row extraction to enforce `parsed.id.isNotBlank()` and `parsed.sender.orEmpty()`.
+  * Filtered out null or corrupt entries before returning query results.
+
+### 2. Multi-Version Release Update & Downgrade Manager
+* **Interactive Release History Selector (`AppUpdateDialog.kt`):**
+  * Added direct version list display in `AppUpdateDialog.kt` rendering all published releases (`app-release-v3.0.0.apk` through `app-release-v3.0.4.apk`).
+  * Shows dynamic action buttons for each version:
+    * `✅ Current` for the currently installed build.
+    * `⬆️ Update` for newer releases.
+    * `⬇️ Downgrade` for previous versions.
+  * Added confirmation warning dialog for downgrades explaining Android package signature constraints and data backup requirements before triggering direct APK download.
+* **Version-Named APK Distribution:**
+  * Automated versioned APK deployment (`app-release-v3.0.4.apk`) alongside standard `app-release.apk` in the update repository to support seamless downgrading and version pinning.
+
 ## Version 3.0.3 (2026-11-23)
 
 ### 1. Startup & Login Crash Hotfix
