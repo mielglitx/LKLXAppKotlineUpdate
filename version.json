@@ -1,15 +1,15 @@
 {
-    "version": "3.0.1",
-    "versionName": "3.0.1",
-    "versionCode": 301,
-    "nativeVersion": "3.0.1",
-    "url": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
-    "fallbackUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
-    "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
-    "checksum": "8e31765e129befc52f11718900f06f3d96cc8f4c6516249707848412eaedffce",
-    "updatedAt": "2026-11-23T07:55:00.000Z",
-    "notes": "Lokalex Native Compose v3.0.1 (Build 301): Dedicated Admin Void / Cancel Login in Logins screen with full database and cache eviction; Device identity scoping eliminating ghost status transitions on admin devices; Team Leader (TL) commission inclusion and ⭐ TL role badge tagging; Rider of the Week (ROTW) automated evaluation with flexible weekday discounts; and Performance Tracker monitored riders filter.",
-    "isApkUpdate": true,
-    "isApkOnly": true,
-    "forceApk": true
+    "version":  "3.0.2",
+    "versionName":  "3.0.2",
+    "versionCode":  302,
+    "nativeVersion":  "3.0.2",
+    "url":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
+    "fallbackUrl":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
+    "apkUrl":  "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
+    "checksum":  "236beecc7c08d186b0544071fa28fd8f93cfb3fd60aaeb3ebbbacec319e02d0b",
+    "updatedAt":  "2026-11-23T01:20:49.919Z",
+    "notes":  "Lokalex Native Compose v3.0.2 (Build 302): Zero-data fast user interaction reconnector with ETag 304 cache; Instant screen-off zombie socket auto-healing; Parallelized roster and login queries; Hardened roster lineup fallbacks with today date-scoping and loginTimestamp priority; and Inbox long-press multi-select for batch Done and batch Cancel orders.",
+    "isApkUpdate":  true,
+    "isApkOnly":  true,
+    "forceApk":  true
 }

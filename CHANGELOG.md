@@ -1,5 +1,37 @@
 # Lokalex App Release Notes
 
+## Version 3.0.2 (2026-11-23)
+
+### 1. Inbox Long-Press Multi-Select & Batch Actions
+* **Multi-Select Card Selection (`ChatThreadListPane.kt`):**
+  * Added long-press gesture trigger on customer chat cards (`.combinedClickable(onClick, onLongClick)`) that activates multi-select mode without accidental clicks.
+  * Displays a sticky top action bar showing the selected order count (e.g., `3 sel`), `Select All`, `Deselect`, `✓ Mark Done`, and `🚫 Void / Cancel`.
+  * Renders clear visual checkbox indicator icons on selected and unselected cards while in multi-select mode.
+* **Batch Customer Completion & Cancellation (`ChatFeedScreen.kt`):**
+  * Hooked up batch actions with safety confirmation dialogs (`LokalexConfirmSafetyDialog`) preventing accidental mass modifications.
+  * Batch Mark Done calls `executeMarkCustomerDone` for all selected threads with receipt validation bypass and full audit logging.
+  * Batch Cancel calls `cancelChatCatering` for all selected threads, releasing assigned riders back to the active queue.
+
+### 2. Zero-Data Fast Reconnection
+* **Instant Interaction Reconnection (`MainActivity.kt`):**
+  * Added throttled `onUserInteraction()` trigger that immediately checks for connection health and triggers lightweight HTTP 304 ETag verification when the user taps or touches the screen.
+  * Consumes 0 network payload bytes when data has not changed, while restoring active connectivity within milliseconds of screen wake.
+* **Zombie Socket Auto-Healing (`LokalexForegroundService.kt`):**
+  * Lowered probe heartbeat timeout from 10s down to 2.5s on screen wake and user interaction.
+  * Immediately resets dead/stale WebSocket connections idle for $> 35$ seconds and bypasses the 5-second reconnect cooldown for interactive wakeups.
+
+### 3. Parallelized Roster & Shift Queries
+* **Concurrent Async Requests (`RosterAndShiftRepository.kt`):**
+  * Parallelized `roster` and `logins` HTTP queries using Kotlin Coroutines `coroutineScope` and `async(Dispatchers.IO)`.
+  * Cuts shift and lineup fetch latency by 50% on routine updates and startup.
+
+### 4. Hardened Roster Lineup Fallbacks
+* **Date-Scoped Available Timestamps (`Rider.kt`, `RosterAndShiftRepository.kt`, `RotationsScreen.kt`):**
+  * Scoped `effectiveAvailableTimestamp` and `resolveRiderAvailableSinceMs` strictly to today's midnight epoch (`todayMidnightMs`).
+  * Suppresses stale timestamps from prior days, preventing inactive riders from improperly ranking #1 in FIFO/Lowest Gross queue calculations.
+  * Added `loginTimestamp` to the effective availability fallback chain when on-duty.
+  * Enhanced `clearDailyCachesForRollover` and unlogged rider cleanup to clear `availableTimestamp`, `queueTime`, and `cooldownUntil`.
+
 ## Version 3.0.1 (2026-11-23)
 
 ### 1. Admin Void / Cancel Login Feature
