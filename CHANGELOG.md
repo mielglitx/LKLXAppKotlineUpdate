@@ -1,5 +1,25 @@
 # Lokalex App Release Notes
 
+## Version 3.0.6 (2026-11-24)
+
+### 1. Delivery Fee Guard in Cart Wizard
+* **Required Delivery Fee:** If an order is not marked as Free Delivery, the app asks the courier to enter the delivery fee before generating or sending a receipt.
+* **Smart Action Prompt:** Displays a clear dialog with options to add the fee or mark as Free Delivery, highlighting the fee field in red if left empty.
+
+### 2. Lineup Queue Priority & Multi-Booking
+* **Fair Lineup Priority:** Couriers waiting in line always have priority for incoming orders. Couriers already catering cannot take new inbox orders while others are waiting in line.
+* **All-Busy Multi-Booking:** When all on-duty couriers are currently busy catering, couriers are allowed to claim remaining inbox orders within their limit.
+
+### 3. Catering Tab Anti-Takeover Protection
+* **Customer Protection:** Prevents couriers from accidentally catering someone who is already in the Catering tab.
+* **Hidden Actions & Instant Lock:** "Cater" buttons are hidden on active catering chats, and atomic locks reject duplicate claims instantly.
+
+### 4. Messenger Quoted Replies in Chat
+* **Visible Reply Bubbles:** When a customer replies to a specific message, the original quoted text is clearly displayed directly above their message bubble with an accent bar.
+
+### 5. Lineup Status Reliability
+* **Fast Status Sync:** Removed background database reads that could overwrite fresh courier status updates, ensuring active statuses update instantly.
+
 ## Version 3.0.5 (2026-11-23)
 
 ### 1. Authoritative Commission & Receipts Sync (Zero Local Fallbacks)
