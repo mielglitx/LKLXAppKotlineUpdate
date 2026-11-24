@@ -1,25 +1,33 @@
 {
-    "version": "3.0.6",
-    "versionName": "3.0.6",
-    "versionCode": 306,
-    "nativeVersion": "3.0.6",
-    "url": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.6.apk",
+    "version": "3.0.7",
+    "versionName": "3.0.7",
+    "versionCode": 307,
+    "nativeVersion": "3.0.7",
+    "url": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.7.apk",
     "fallbackUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
-    "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.6.apk",
-    "checksum": "9f1dfdf6b13bdaa5b379c89ec0491e3b31b3853359b7cba12e04f859d98f31e8",
+    "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.7.apk",
+    "checksum": "b536c185ecefd3ffc6b4fb01c07253a8c3f55684093f10fa5a28eef777d5a7c5",
     "updatedAt": "2026-11-24T00:00:00.000Z",
-    "notes": "Lokalex Native v3.0.6: Delivery fee guard in Cart Wizard, lineup queue priority for waiting couriers, catering tab anti-takeover protection, and Messenger quoted replies in chat.",
+    "notes": "Lokalex Native Compose v3.0.7 (Build 307): Cart draft key migration, N/A item receipt visibility, and Sample Receipt mode (not saved unless named to a customer).",
     "isApkUpdate": true,
     "isApkOnly": true,
     "forceApk": true,
     "releases": [
+        {
+            "versionName": "3.0.7",
+            "versionCode": 307,
+            "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.7.apk",
+            "releaseDate": "2026-11-24",
+            "headline": "Cart Draft Key Migration, N/A Items on Receipts & Sample Receipt Mode",
+            "notes": "Cart draft key migration prevents items disappearing when thread IDs connect. N/A items are clearly marked on receipts so customers see unavailable items. Sample receipts allow testing calculations without saving to database unless named to someone."
+        },
         {
             "versionName": "3.0.6",
             "versionCode": 306,
             "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.6.apk",
             "releaseDate": "2026-11-24",
             "headline": "Cart Wizard Delivery Fee Guard, Queue Priority & Anti-Takeover Protection",
-            "notes": "Delivery fee is now required before creating receipts (unless marked Free Delivery). Waiting couriers get order priority, catering customers cannot be taken over, and Messenger reply quotes now show in chat."
+            "notes": "Delivery fee guard prompts riders before generating receipts when not free delivery. Lineup queue priority protects waiting couriers, catering anti-takeover blocks sniping, and messenger reply quotes render original text."
         },
         {
             "versionName": "3.0.5",

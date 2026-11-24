@@ -1,5 +1,24 @@
 # Lokalex App Release Notes
 
+## Version 3.0.7 (2026-11-24)
+
+### 1. Cart Draft Key Migration
+* **No More Disappearing Items:** Seamlessly migrates and merges cart items when a customer's Messenger thread ID loads or metadata connects, ensuring couriers never lose their entered items.
+* **Automatic Cleanup:** Migrates legacy drafts and cleans up orphaned keys so active customer carts remain accurate and persistent.
+
+### 2. N/A (Not Available) Items on Receipts
+* **Clear Customer Transparency:** Items marked as N/A are now explicitly included on both digital image receipts and formatted text receipts (e.g. `• Pork Chop — N/A (Not Available)`).
+* **Accurate ₱0 Pricing:** N/A items have ₱0.00 charge on totals and commission calculations, while clearly informing customers what items were unavailable or out of stock.
+
+### 3. Sample Receipt Mode
+* **Replaced Walk-in Mode:** The previous "Walk-in Customer" is now "Sample Receipt Mode", allowing couriers to calculate delivery fees, store totals, and preview receipts anytime without saving them to the system.
+* **Not Saved Unless Named:** Sample receipts are never pushed to the server database. Couriers can tap "Name Customer" at any time to assign the sample receipt to an actual customer and save it to the system.
+
+### 4. Minimized Floating Pill Enhancements
+* **Queue Position Prefix:** Minimized floating pill displays your real-time queue position (e.g. `#1 • Inbox: 2 / Catered: 1`) or active status prefix (Catering / Break / Admin).
+* **Inactivity Semi-Transparency:** The floating pill smoothly dims to 45% opacity after 4 seconds of idle, instantly waking to full opacity on touch, new messages, or queue advancements.
+* **Instant Lineup Ticker:** Tab rotation badges and lineup position update immediately without waiting for network refresh ticks.
+
 ## Version 3.0.6 (2026-11-24)
 
 ### 1. Delivery Fee Guard in Cart Wizard
