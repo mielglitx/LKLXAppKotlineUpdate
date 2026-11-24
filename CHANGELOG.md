@@ -1,5 +1,26 @@
 # Lokalex App Release Notes
 
+## Version 3.0.9 (2026-11-24)
+
+### 1. Break Time Allowance Enforcement
+* **Daily Break Time Limits:** Enforced daily break allowance limits (60 minutes) for regular Riders and Team Leaders, blocking new breaks once allowance reaches 0 while preserving Admin/Inspector unlimited break mode.
+* **Accurate Elapsed Break Tracking:** Elapsed break time is precisely tracked and accumulated (`totalBreakMinutes`) in local memory, Supabase `roster`, and `logins` tables when returning to Available or ending shift.
+
+### 2. Foreground Status Modal Extended to Catering & Done
+* **Catering & Done Progress Feedback:** The foreground status progress modal with 3s auto-closing countdown now covers Catering, Force Catering, and Marking orders as Done in both the Rotations tab and Chat screen.
+* **Live Retry & Signal Guidance:** Couriers receive live progress feedback with up to 3 cancelable retries and connectivity advice if cellular connection drops.
+
+### 3. Customer Cart Receipt Checkmarks
+* **Instant Delivery Receipt Verification:** Customers who already have a completed receipt for their current transaction now display a clear green checkmark badge on their chat cards.
+
+### 4. Same-Day Repeat Orders & Anti-Takeover Protection
+* **Repeat Same-Day Orders:** Resolved an issue where customers making repeat same-day orders could conflict with earlier completed receipts; earlier receipts prior to the new order start are now safely ignored.
+* **Anti-Takeover Safeguard:** Dropdown catering actions are hidden for deliveries actively in the Catering tab to prevent accidental order takeover.
+
+### 5. Chat History Batch Ingestion & Roster Shift Safety
+* **Smooth Chat History Loading:** SQLite batch message saving eliminates typewriter pop-in scroll animations when opening large chat threads.
+* **Shift Protection:** Active daily courier sessions and login audit records are strictly protected from accidental test triggers and network refresh wipes.
+
 ## Version 3.0.8 (2026-11-24)
 
 ### 1. Foreground Status Change Confirmation Modal
