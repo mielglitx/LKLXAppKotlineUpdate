@@ -1,10 +1,17 @@
 {
+    "version": "3.0.8",
+    "versionName": "3.0.8",
+    "versionCode": 308,
+    "nativeVersion": "3.0.8",
+    "url": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.8.apk",
     "fallbackUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
     "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.8.apk",
     "checksum": "cdc82f0431bb0250bdd5206eb9741137bee6a8a6da4c273dc83d3b34adcc11da",
-    "updatedAt": "2026-11-24T05:55:00.000Z",
+    "updatedAt": "2026-11-24T06:12:00.000Z",
     "notes": "Lokalex Native Compose v3.0.8 (Build 308): Status Confirmation Modal, Lineup Desync Fix, Once-Per-Day Directory Sync, and Background Store Menu Downloader.",
     "isApkUpdate": true,
+    "isApkOnly": true,
+    "forceApk": true,
     "releases": [
         {
             "versionName": "3.0.8",
