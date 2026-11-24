@@ -1,18 +1,19 @@
 {
-    "version": "3.0.7",
-    "versionName": "3.0.7",
-    "versionCode": 307,
-    "nativeVersion": "3.0.7",
-    "url": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.7.apk",
     "fallbackUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
-    "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.7.apk",
-    "checksum": "b536c185ecefd3ffc6b4fb01c07253a8c3f55684093f10fa5a28eef777d5a7c5",
-    "updatedAt": "2026-11-24T00:00:00.000Z",
-    "notes": "Lokalex Native Compose v3.0.7 (Build 307): Cart draft key migration, N/A item receipt visibility, and Sample Receipt mode (not saved unless named to a customer).",
+    "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.8.apk",
+    "checksum": "cdc82f0431bb0250bdd5206eb9741137bee6a8a6da4c273dc83d3b34adcc11da",
+    "updatedAt": "2026-11-24T05:55:00.000Z",
+    "notes": "Lokalex Native Compose v3.0.8 (Build 308): Status Confirmation Modal, Lineup Desync Fix, Once-Per-Day Directory Sync, and Background Store Menu Downloader.",
     "isApkUpdate": true,
-    "isApkOnly": true,
-    "forceApk": true,
     "releases": [
+        {
+            "versionName": "3.0.8",
+            "versionCode": 308,
+            "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.8.apk",
+            "releaseDate": "2026-11-24",
+            "headline": "Status Confirmation Modal, Lineup Desync Fix, Daily Sync & Menu Downloader",
+            "notes": "Foreground modal with 3s auto-closing countdown confirms Available, Catering, Break, and End shifts with 3 cancelable auto-retries and signal check guidance. Fixes cross-device lineup desync and card text wrapping. Adds once-per-day directory sync and background store menu downloader."
+        },
         {
             "versionName": "3.0.7",
             "versionCode": 307,

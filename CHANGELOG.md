@@ -1,5 +1,29 @@
 # Lokalex App Release Notes
 
+## Version 3.0.8 (2026-11-24)
+
+### 1. Foreground Status Change Confirmation Modal
+* **Real-Time Status Feedback:** A dedicated foreground confirmation modal now informs the courier whenever their shift status is updating (`Available`, `Catering`, `Break`, `End`).
+* **3-Second Auto-Closing Success:** On successful status change, the modal shows `"Status Confirmed!"` with your new lineup position (e.g., `#1`), counting down 3 seconds before auto-closing, or tap **[OK]** to close instantly.
+* **Auto-Retry (Up to 3 Attempts):** If connection is slow or drops, the app automatically retries up to 3 times (`Attempt 1 of 3`, `Attempt 2 of 3`, `Attempt 3 of 3`).
+* **Interruptible with Cancel:** Couriers can tap **[Cancel]** at any time during the retry process to abort without getting stuck.
+* **Signal Check Guidance:** If all 3 attempts fail, the modal prompts the courier to move to an area with better mobile signal or check mobile data / Wi-Fi, with **[Try Again]** and **[Dismiss]** buttons.
+* **Status Rejection Alerts:** Clearly displays the reason if a status change is blocked (e.g., lists unreceipted customers if trying to go Available before completing receipts).
+
+### 2. Cross-Device Lineup Desync & Clock Drift Resolution
+* **Clock Skew Tolerance:** Added a 15-second clock drift grace window so couriers whose phone clocks run slightly behind receiving devices do not have their `Catering → Available` status dropped by monotonic timestamp filters.
+* **Authoritative Server Available Protection:** Live Supabase `Available` status is strictly protected against stale in-memory chat overrides during roster refresh ticks, eliminating desync where a rider shows Available on their phone but still in Catering on others.
+
+### 3. Catering Card Name Layout Fix
+* **Eliminated Vertical Letter Wrapping:** Enforced single-line truncation with ellipsis on courier names in catering cards and moved wide ROTW / Day Off award badges to a secondary row to prevent vertical character breakdown (`"Al / la / n / Aq / ui / no"`).
+
+### 4. Once-Per-Day Directory Sync
+* **Bandwidth & Data Saver:** Customer profiles, merchant stores, and delivery rates are checked once per calendar day (Asia/Manila) on app open. Subsequent app opens throughout the same day skip redundant network downloads.
+
+### 5. Background Store Menu Downloader
+* **On-Demand Menu Downloads:** Couriers can download complete merchant menus in the background from the store directory.
+* **Smart Local Cache:** Checks local storage first and skips already-downloaded pages. Automatically deletes old menus that are no longer in the database.
+
 ## Version 3.0.7 (2026-11-24)
 
 ### 1. Cart Draft Key Migration
