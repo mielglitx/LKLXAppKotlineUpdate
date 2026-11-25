@@ -1,5 +1,11 @@
 # Lokalex App Release Notes
 
+## Version 3.0.11 (2026-11-25)
+
+### Fixes
+* **Inbox Done No Longer Changes Status:** Moving a chat in the Inbox folder to Done no longer sets the user to `Available` or triggers a lineup cooldown.
+* **Available Lineup Position Preserved:** Users who are already in the `Available` lineup are no longer re-queued to the back of the line or given a new cooldown if an `Available` update is triggered again.
+
 ## Version 3.0.10 (2026-11-25)
 
 ### 1. Commission & Fee Calculation Fix
