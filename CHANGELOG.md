@@ -1,5 +1,16 @@
 # Lokalex App Release Notes
 
+## Version 3.0.10 (2026-11-25)
+
+### 1. Commission & Fee Calculation Fix
+* **Handling, Market & Multi-stop Fees Included:** Receipts, rider commissions, and daily gross totals now properly include Handling Fee, Market Fee, Multi-stop Fee, and Discounts.
+* **Editing Unlocked Carts:** If you unlock a cart and update fees, re-saving now updates the saved receipt and commission accurately.
+
+### 2. Catering & Chat Folder Fix
+* **Stopped Catering Status Switching Back and Forth:** Fixed the bug where a rider who tapped Cater on their own still appeared as Available, the customer chat moved to Done, and the status kept switching between Catering and Available.
+* **Cleaner Queue Check & Auto-Restore:** Self-catering no longer blocks itself in the queue check, and if an update fails to save, the chat automatically goes back to Inbox so nothing gets stuck.
+* **Better Customer Name & Folder Sync:** Customer names stay visible during fast lineup updates, and opening chats stays in the correct folder tab.
+
 ## Version 3.0.9 (2026-11-24)
 
 ### 1. Break Time Allowance Enforcement
