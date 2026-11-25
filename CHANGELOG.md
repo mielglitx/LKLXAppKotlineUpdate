@@ -1,5 +1,13 @@
 # Lokalex App Release Notes
 
+## Version 3.0.13 (2026-11-25)
+
+### Fixes & New Features
+* **End-Shift Preserved on Inbox Done:** Fixed the bug where marking an Inbox message as Done while on `End` shift switched your status back to `Available` or logged you in again.
+* **Banned Folder in Live Chat:** Added a dedicated `Banned` folder tab where banned customers stay locked until their ban is lifted or removed.
+* **Ban Customer Menu & Confirmation Modal:** Replaced `• Close Thread` in Chat Menu Options with `• Ban Customer` (and `• Lift Ban (Unban)` for banned chats), including duration options (`Days`, `Weeks`, `Months`, `Permanent`), an optional ban reason field, and a confirmation dialog before banning.
+* **Admin & TL Ban Permission:** Only Admins—and Team Leaders explicitly granted the `Ban / Unban Customers` permission—can ban or unban customers.
+
 ## Version 3.0.12 (2026-11-25)
 
 ### Fixes & Improvements
