@@ -1,5 +1,12 @@
 # Lokalex App Release Notes
 
+## Version 3.0.15 (2026-11-26)
+
+### Fixes & Improvements
+* **Manage (Riders) Card & Action Overlap Fix:** Fixed rider account cards in `Rider Accounts & Permissions` so long names and credit/exempt badges never push the **Password**, **Edit**, or **Delete** buttons off the right edge or wrap counts onto two lines.
+* **Responsive Role, Powers & Access Pills:** Switched rider card role dropdowns and `Powers` / `Access` buttons to a responsive wrapping row so Team Leader buttons never collide or squash vertically at any screen resolution or UI Settings scale.
+* **Full-Width Admin Settings Modals:** Enabled responsive full-width sizing across Admin Settings dialogs (`Manage (Riders)` sub-dialogs, `Time-In Schedule`, `Early Out`, `Day Off`, `Day-Off Rules`, `Bookings Limit`, `Credits`, `Ban List`, `Send to Many`, `FB APIs`, `Find Riders`, `Auto End`, `Auto-Msg`, `Main Hub`, `Store Hub`, `Breaks`, `Chimes`, `Commission`, `Performance`, and `Lokalex Menu`) so `UI Settings` scales every admin panel cleanly without clipping.
+
 ## Version 3.0.14 (2026-11-26)
 
 ### New Features & Patches
