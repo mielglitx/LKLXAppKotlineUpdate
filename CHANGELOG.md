@@ -1,5 +1,13 @@
 # Lokalex App Release Notes
 
+## Version 3.0.12 (2026-11-25)
+
+### Fixes & Improvements
+* **Stopped Done ↔ Inbox Switching:** Fixed the bug where a chat with a new customer reply kept jumping back and forth between `Done` and `Inbox`.
+* **Steady Chat Card Previews:** Fixed chat previews changing back to older messages during live updates and tab refreshes.
+* **Single Entry Per Customer:** Merged duplicate chat records for the same customer before sorting into folder tabs and consolidated legacy duplicate rows in the database.
+* **Auto-Reopen Missed Customer Replies:** New customer messages caught by background sync or realtime updates on a previously `Done` chat now reopen straight to `Inbox` automatically.
+
 ## Version 3.0.11 (2026-11-25)
 
 ### Fixes
