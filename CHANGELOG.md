@@ -1,5 +1,17 @@
 # Lokalex App Release Notes
 
+## Version 3.0.14 (2026-11-26)
+
+### New Features & Patches
+* **Directory Store Menu Camera (Single & Multi-Shot):** Added **Camera — Single Shot** and **Camera — Multi-Shot (Bulk)** alongside Gallery when adding menu photos in Directory → View Menu (`+ Add Photos`), built directly on the existing CameraX module.
+* **Menu Edge Detection & Full-Camera Fallback:** Live CameraX viewfinder highlights detected menu edges and crops/dewarps strictly to the menu, with automatic fallback (or manual toggle) to capture the full camera frame whenever edges are unclear.
+* **Background Menu Upload & Foreground Progress Banner:** Menu photo compression and uploads run cleanly in the background so you can close Directory and keep using Chats or Rotations while tracking live progress (`X / Y`) in a non-blocking foreground banner.
+* **UI Settings (Resolution & DPI Auto-Fit + Slider):** Replaced `View / Font size` with `UI Settings`; checks device resolution and DPI at startup to auto-calibrate layout scale, fixes 1:1 proportional text scaling so text no longer overflows buttons, hardens responsive chrome layouts, and adds a continuous **Smallest → Biggest** slider tailored to your phone's safe limits.
+
+### Sync & Reliability Fixes
+* **Worker Sync Timeouts & Cancellation Errors:** Increased `/api/sync-messages` read timeout to `30s`, ran chat metadata writes off UI composition scopes with a transient `SocketTimeoutException` retry, stopped duplicate `SupabaseException` + `ChatMetaUpdate` error logging, and eliminated spurious `"The coroutine scope left the composition"` errors on tab/room switches.
+* **Backend Batch Upsert & Sync Speed Patch:** Updated `cloudflare-worker.js` to deduplicate batch upserts (fixing Postgres `21000` duplicate conflict key errors on `midIndex`) and parallelize/batch `/api/sync-messages` syncs.
+
 ## Version 3.0.13 (2026-11-25)
 
 ### Fixes & New Features
