@@ -1,5 +1,12 @@
 # Lokalex App Release Notes
 
+## Version 3.0.19 (2026-11-26)
+
+### Break System & Custom Presets Fixes
+* **Daily Break Reset Reliability:** Fixed clock-in (`End -> Available`) overwriting `recordRiderTimeIn`'s `0` break reset back to prior-day `totalBreakMinutes`, added `breakDate` validation in `parseSingleRosterRow` / `refreshRoster()` / `updateRiderStatusWithResult` so carried-over break minutes (such as stale `2026-11-24` totals) reset cleanly on new days, and allowed `applyRealtimeRosterUpdate` to apply `totalBreakMinutes = 0` resets.
+* **Custom Break Presets Sync & Saving:** Fixed settings delta sync skipping `breakPeriods` rows missing `updatedAt` (`data->>updatedAt.is.null`), eliminated duplicate preset ID collisions for equal durations (e.g., 20m Morning/Afternoon breaks), auto-committed typed inputs when tapping `Save Break Settings` in `AdminBreakSettingsDialog`, and added error feedback if Supabase saves fail.
+* **Live Supabase Repair:** Cleared Mark Sanqui's stale `2026-11-24` `totalBreakMinutes` (`67m`) carryover and recalculated today's `workedMinutes` (`585 -> 652`), and added `updatedAt` + dual `minutes`/`duration` keys to live `breakPeriods` so all riders sync `Morning Break (20m)`, `Afternoon Break (20m)`, and `Lunch Break (60m)` automatically.
+
 ## Version 3.0.18 (2026-11-26)
 
 ### Store Menu Fixes
