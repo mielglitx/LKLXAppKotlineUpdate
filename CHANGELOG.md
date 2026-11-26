@@ -1,5 +1,14 @@
 # Lokalex App Release Notes
 
+## Version 3.0.18 (2026-11-26)
+
+### Store Menu Fixes
+* **Canonical Store Key Consolidation:** Fixed `resolveCanonicalStoreKey` and store menu saves so `dir_stores_` / `smg__` / `store_` prefixes are stripped properly instead of creating duplicate `dirstores*` store entries every time menus are removed or re-added.
+* **No More Phantom Menus (`View Menu (N)` with Blank/Unsent Images):** Fixed `mergeDirectoryRecords` and `saveDirectoryRecordAndReturn` so empty duplicate records and store edits no longer overwrite valid HTTPS menu URLs while `storeMenuMeta` still shows a menu count.
+* **Rejected Leaked `file://` Device Paths & Fixed Send Errors:** Filtered out stale device-local `file://` URIs (like old local cache paths saved to Supabase), stopped `sendPhotoMessageWithOutcome` from silently sending missing local files, surfaced toast alerts when a menu send fails, and auto-forced a directory refresh whenever phantom menu counts are detected.
+* **Image Viewer & Grid Resilience:** Verified cached disk files by image header before reading, added visible error cards and a **Retry** button in `FullscreenPhotoViewerDialog` and the menu grid, and made `Manage Store Menus` rows directly clickable.
+* **Supabase Store Cleanup:** Consolidated existing duplicate `dirstores*` and underscore store entries onto their canonical keys with valid HTTPS Storage URLs.
+
 ## Version 3.0.17 (2026-11-26)
 
 ### Fixes
