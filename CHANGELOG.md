@@ -1,5 +1,10 @@
 # Lokalex App Release Notes
 
+## Version 3.0.17 (2026-11-26)
+
+### Fixes
+* **Create Name for Sample Customer:** Fixed the Cart & Receipt Wizard bug where tapping **Name Customer** on a Sample Receipt saved the draft under a manual customer key that was immediately dropped by the active customer target list (causing the screen to snap back to blank `Sample Receipt Mode`). Manually named sample customers now appear immediately in the Cart customer tabs and dropdown, keep all items/fees intact, and save receipts cleanly.
+
 ## Version 3.0.16 (2026-11-26)
 
 ### Break System Fixes
