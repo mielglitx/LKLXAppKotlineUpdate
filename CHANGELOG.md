@@ -1,5 +1,13 @@
 # Lokalex App Release Notes
 
+## Version 3.0.16 (2026-11-26)
+
+### Break System Fixes
+* **Fixed Break Status Not Persisting (Admin & Riders):** Added the missing `status = "Break"` field when updating Supabase `roster` on break start so Admin, Inspector, TL, and Rider accounts actually stay on Break across live sync polls instead of snapping back to `Available`.
+* **Break Transition & Catering Guards:** Added clear safety checks requiring riders/admins to clock in to `Available` first (cannot jump straight from `End` to `Break`) and finish active catering deliveries before taking a break.
+* **Daily Break Allowance Rollover Reset:** Cleared stale prior-day `totalBreakMinutes` and break timestamps on daily rollover and first clock-in of a new day while still preserving same-day accumulated break minutes.
+* **Custom Break Periods Compatibility:** Updated `breakPeriods` parsing and saving to support both `"duration"` and `"minutes"` fields so configured break presets (such as `Morning Break` and `Afternoon Break`) appear properly alongside `Unlimited Break` for Admins/Inspectors.
+
 ## Version 3.0.15 (2026-11-26)
 
 ### Fixes & Improvements
