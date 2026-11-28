@@ -1,18 +1,26 @@
 {
-    "version": "3.0.19",
-    "versionName": "3.0.19",
-    "versionCode": 319,
-    "nativeVersion": "3.0.19",
-    "url": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.19.apk",
+    "version": "3.0.20",
+    "versionName": "3.0.20",
+    "versionCode": 320,
+    "nativeVersion": "3.0.20",
+    "url": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.20.apk",
     "fallbackUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release.apk",
-    "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.19.apk",
-    "checksum": "511a6cb94f45d28e5dd6aa98ac86859cb1ef584baf7c746d2b9ba854d093b546",
-    "updatedAt": "2026-11-26T13:55:00.000Z",
-    "notes": "Lokalex Native v3.0.19 (Build 319): Fixed daily break allowance reset across days (clock-in End -> Available no longer overwrites 0 resets with prior-day totals, stale breakDate records clear automatically, and Realtime updates honor explicit 0 resets), fixed settings delta sync skipping breakPeriods rows missing updatedAt so Morning/Afternoon/Lunch Break presets sync to all users, fixed equal-duration preset ID collisions, and added Admin Break Settings validation + auto-commit on save.",
+    "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.20.apk",
+    "checksum": "65b05043d46e23b207c122adc4af6f850d8d5deb61d791235aac18a9ce7278c5",
+    "updatedAt": "2026-11-28T05:55:00.000Z",
+    "notes": "Lokalex Native v3.0.20 (Build 320): Added the Part Timer account type (fixed commission base configured in Admin Part-Timer Settings, excluded from all commission discounts and Performance Tracker / ROTW monitoring), and fixed Admin rider day-off changes/clears so stale or duplicate rider_dayoffs rows are cleaned up and Realtime updates propagate clears cleanly.",
     "isApkUpdate": true,
     "isApkOnly": true,
     "forceApk": true,
     "releases": [
+        {
+            "versionName": "3.0.20",
+            "versionCode": 320,
+            "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.20.apk",
+            "releaseDate": "2026-11-28",
+            "headline": "Part Timer Account Type, Fixed Commission & Day-Off Persistence Fix",
+            "notes": "Added the Part Timer account type (fixed commission base configured in Admin Part-Timer Settings, excluded from all commission discounts and Performance Tracker / ROTW monitoring), and fixed Admin rider day-off changes/clears so stale or duplicate rider_dayoffs rows are cleaned up and Realtime updates propagate clears cleanly."
+        },
         {
             "versionName": "3.0.19",
             "versionCode": 319,
@@ -35,7 +43,7 @@
             "apkUrl": "https://raw.githubusercontent.com/mielglitx/LKLXAppKotlineUpdate/main/app-release-v3.0.17.apk",
             "releaseDate": "2026-11-26",
             "headline": "Sample Customer Naming Fix in Cart & Receipt Wizard",
-            "notes": "Fixed creating/naming a customer from Sample Receipt Mode in Cart & Receipt Wizard so named custom drafts persist in the active Cart customer tabs and dropdown selector instead of snapping back to blank Sample Receipt Mode."
+            "notes": "Fixed creating/naming a customer from Sample Receipt Mode in Cart & Receipt Wizard so named custom drafts persist in the active Cart tabs and dropdown selector instead of snapping back to blank Sample Receipt Mode."
         },
         {
             "versionName": "3.0.16",

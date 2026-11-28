@@ -1,5 +1,12 @@
 # Lokalex App Release Notes
 
+## Version 3.0.20 (2026-11-28)
+
+### New Features & Fixes
+* **Part Timer Account Type (`Manage (Riders)`):** Added the `Part Timer` role (`part_timer`) with normal rider queue, login, chat, and receipt access while excluding Part Timers from Performance Tracker monitoring and Rider of the Week evaluation.
+* **Part-Timer Fixed Commission Settings (Admin):** Added **Part-Timer** under Admin Settings to configure a fixed commission base (%) applied uniformly to regular and overtime orders, excluding Part Timers from Promo Dates, Recurring Day, Individual Overrides, ROTW discounts, and Overtime Relief.
+* **Admin Day-Off Change & Unset Fix:** Fixed clearing or changing a rider's day-off (`setRiderDayOff`) so stale and duplicate name-keyed `rider_dayoffs` rows are removed and Realtime updates honor `dayOff: null` clears; added an admin rider selector & `Clear Day-Off` action in `Day Off` view and clickable day-off badges on logged-in rider rows.
+
 ## Version 3.0.19 (2026-11-26)
 
 ### Break System & Custom Presets Fixes
@@ -80,90 +87,6 @@
 * **Stopped Catering Status Switching Back and Forth:** Fixed the bug where a rider who tapped Cater on their own still appeared as Available, the customer chat moved to Done, and the status kept switching between Catering and Available.
 * **Cleaner Queue Check & Auto-Restore:** Self-catering no longer blocks itself in the queue check, and if an update fails to save, the chat automatically goes back to Inbox so nothing gets stuck.
 * **Better Customer Name & Folder Sync:** Customer names stay visible during fast lineup updates, and opening chats stays in the correct folder tab.
-
-## Version 3.0.9 (2026-11-24)
-
-### 1. Break Time Allowance Enforcement
-* **Daily Break Time Limits:** Enforced daily break allowance limits (60 minutes) for regular Riders and Team Leaders, blocking new breaks once allowance reaches 0 while preserving Admin/Inspector unlimited break mode.
-* **Accurate Elapsed Break Tracking:** Elapsed break time is precisely tracked and accumulated (`totalBreakMinutes`) in local memory, Supabase `roster`, and `logins` tables when returning to Available or ending shift.
-
-### 2. Foreground Status Modal Extended to Catering & Done
-* **Catering & Done Progress Feedback:** The foreground status progress modal with 3s auto-closing countdown now covers Catering, Force Catering, and Marking orders as Done in both the Rotations tab and Chat screen.
-* **Live Retry & Signal Guidance:** Couriers receive live progress feedback with up to 3 cancelable retries and connectivity advice if cellular connection drops.
-
-### 3. Customer Cart Receipt Checkmarks
-* **Instant Delivery Receipt Verification:** Customers who already have a completed receipt for their current transaction now display a clear green checkmark badge on their chat cards.
-
-### 4. Same-Day Repeat Orders & Anti-Takeover Protection
-* **Repeat Same-Day Orders:** Resolved an issue where customers making repeat same-day orders could conflict with earlier completed receipts; earlier receipts prior to the new order start are now safely ignored.
-* **Anti-Takeover Safeguard:** Dropdown catering actions are hidden for deliveries actively in the Catering tab to prevent accidental order takeover.
-
-### 5. Chat History Batch Ingestion & Roster Shift Safety
-* **Smooth Chat History Loading:** SQLite batch message saving eliminates typewriter pop-in scroll animations when opening large chat threads.
-* **Shift Protection:** Active daily courier sessions and login audit records are strictly protected from accidental test triggers and network refresh wipes.
-
-## Version 3.0.8 (2026-11-24)
-
-### 1. Foreground Status Change Confirmation Modal
-* **Real-Time Status Feedback:** A dedicated foreground confirmation modal now informs the courier whenever their shift status is updating (`Available`, `Catering`, `Break`, `End`).
-* **3-Second Auto-Closing Success:** On successful status change, the modal shows `"Status Confirmed!"` with your new lineup position (e.g., `#1`), counting down 3 seconds before auto-closing, or tap **[OK]** to close instantly.
-* **Auto-Retry (Up to 3 Attempts):** If connection is slow or drops, the app automatically retries up to 3 times (`Attempt 1 of 3`, `Attempt 2 of 3`, `Attempt 3 of 3`).
-* **Interruptible with Cancel:** Couriers can tap **[Cancel]** at any time during the retry process to abort without getting stuck.
-* **Signal Check Guidance:** If all 3 attempts fail, the modal prompts the courier to move to an area with better mobile signal or check mobile data / Wi-Fi, with **[Try Again]** and **[Dismiss]** buttons.
-* **Status Rejection Alerts:** Clearly displays the reason if a status change is blocked (e.g., lists unreceipted customers if trying to go Available before completing receipts).
-
-### 2. Cross-Device Lineup Desync & Clock Drift Resolution
-* **Clock Skew Tolerance:** Added a 15-second clock drift grace window so couriers whose phone clocks run slightly behind receiving devices do not have their `Catering → Available` status dropped by monotonic timestamp filters.
-* **Authoritative Server Available Protection:** Live Supabase `Available` status is strictly protected against stale in-memory chat overrides during roster refresh ticks, eliminating desync where a rider shows Available on their phone but still in Catering on others.
-
-### 3. Catering Card Name Layout Fix
-* **Eliminated Vertical Letter Wrapping:** Enforced single-line truncation with ellipsis on courier names in catering cards and moved wide ROTW / Day Off award badges to a secondary row to prevent vertical character breakdown (`"Al / la / n / Aq / ui / no"`).
-
-### 4. Once-Per-Day Directory Sync
-* **Bandwidth & Data Saver:** Customer profiles, merchant stores, and delivery rates are checked once per calendar day (Asia/Manila) on app open. Subsequent app opens throughout the same day skip redundant network downloads.
-
-### 5. Background Store Menu Downloader
-* **On-Demand Menu Downloads:** Couriers can download complete merchant menus in the background from the store directory.
-* **Smart Local Cache:** Checks local storage first and skips already-downloaded pages. Automatically deletes old menus that are no longer in the database.
-
-## Version 3.0.7 (2026-11-24)
-
-### 1. Cart Draft Key Migration
-* **No More Disappearing Items:** Seamlessly migrates and merges cart items when a customer's Messenger thread ID loads or metadata connects, ensuring couriers never lose their entered items.
-* **Automatic Cleanup:** Migrates legacy drafts and cleans up orphaned keys so active customer carts remain accurate and persistent.
-
-### 2. N/A (Not Available) Items on Receipts
-* **Clear Customer Transparency:** Items marked as N/A are now explicitly included on both digital image receipts and formatted text receipts (e.g. `• Pork Chop — N/A (Not Available)`).
-* **Accurate ₱0 Pricing:** N/A items have ₱0.00 charge on totals and commission calculations, while clearly informing customers what items were unavailable or out of stock.
-
-### 3. Sample Receipt Mode
-* **Replaced Walk-in Mode:** The previous "Walk-in Customer" is now "Sample Receipt Mode", allowing couriers to calculate delivery fees, store totals, and preview receipts anytime without saving them to the system.
-* **Not Saved Unless Named:** Sample receipts are never pushed to the server database. Couriers can tap "Name Customer" at any time to assign the sample receipt to an actual customer and save it to the system.
-
-### 4. Minimized Floating Pill Enhancements
-* **Queue Position Prefix:** Minimized floating pill displays your real-time queue position (e.g. `#1 • Inbox: 2 / Catered: 1`) or active status prefix (Catering / Break / Admin).
-* **Inactivity Semi-Transparency:** The floating pill smoothly dims to 45% opacity after 4 seconds of idle, instantly waking to full opacity on touch, new messages, or queue advancements.
-* **Instant Lineup Ticker:** Tab rotation badges and lineup position update immediately without waiting for network refresh ticks.
-
-## Version 3.0.6 (2026-11-24)
-
-### 1. Delivery Fee Guard in Cart Wizard
-* **Required Delivery Fee:** If an order is not marked as Free Delivery, the app asks the courier to enter the delivery fee before generating or sending a receipt.
-* **Smart Action Prompt:** Displays a clear dialog with options to add the fee or mark as Free Delivery, highlighting the fee field in red if left empty.
-
-### 2. Lineup Queue Priority & Multi-Booking
-* **Fair Lineup Priority:** Couriers waiting in line always have priority for incoming orders. Couriers already catering cannot take new inbox orders while others are waiting in line.
-* **All-Busy Multi-Booking:** When all on-duty couriers are currently busy catering, couriers are allowed to claim remaining inbox orders within their limit.
-
-### 3. Catering Tab Anti-Takeover Protection
-* **Customer Protection:** Prevents couriers from accidentally catering someone who is already in the Catering tab.
-* **Hidden Actions & Instant Lock:** "Cater" buttons are hidden on active catering chats, and atomic locks reject duplicate claims instantly.
-
-### 4. Messenger Quoted Replies in Chat
-* **Visible Reply Bubbles:** When a customer replies to a specific message, the original quoted text is clearly displayed directly above their message bubble with an accent bar.
-
-### 5. Lineup Status Reliability
-* **Fast Status Sync:** Removed background database reads that could overwrite fresh courier status updates, ensuring active statuses update instantly.
 
 ## Version 3.0.5 (2026-11-23)
 
